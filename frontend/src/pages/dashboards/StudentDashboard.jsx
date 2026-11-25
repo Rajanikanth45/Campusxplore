@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Building2, Compass, ArrowRight, BookOpen, Layers, AlertTriangle } from 'lucide-react';
+import { Building2, Compass, ArrowRight, BookOpen, AlertTriangle } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import facilityService from '../../services/facilityService';
 import Badge from '../../components/common/Badge';
@@ -9,19 +9,14 @@ import Spinner from '../../components/common/Spinner';
 export default function StudentDashboard() {
   const { user } = useAuth();
   const [facilities, setFacilities] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
-    Promise.all([
-      facilityService.getFacilities({ pageSize: 3 }),
-      facilityService.getCategories(),
-    ])
-      .then(([facData, catData]) => {
+    facilityService.getFacilities({ pageSize: 3 })
+      .then((facData) => {
         if (isMounted) {
           setFacilities(facData.results || []);
-          setCategories(catData || []);
         }
       })
       .catch((err) => {
@@ -73,7 +68,7 @@ export default function StudentDashboard() {
       </div>
 
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-2">
           <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
             <Building2 className="w-5 h-5" />
@@ -87,23 +82,6 @@ export default function StudentDashboard() {
             className="inline-flex items-center text-xs font-semibold text-indigo-600 hover:text-indigo-700 pt-1"
           >
             <span>View all directory</span>
-            <ArrowRight className="w-3.5 h-3.5 ml-1" />
-          </Link>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-2">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
-            <Layers className="w-5 h-5" />
-          </div>
-          <h3 className="text-sm font-semibold text-slate-700">Facility Categories</h3>
-          <p className="text-xs text-slate-500 leading-relaxed">
-            {categories.length > 0 ? `${categories.length} categories available` : 'Classification directory'}
-          </p>
-          <Link
-            to="/facilities"
-            className="inline-flex items-center text-xs font-semibold text-emerald-600 hover:text-emerald-700 pt-1"
-          >
-            <span>Filter by category</span>
             <ArrowRight className="w-3.5 h-3.5 ml-1" />
           </Link>
         </div>

@@ -7,16 +7,28 @@ import {
   Footprints,
   ExternalLink,
   X,
-  Navigation,
   Compass,
   Siren,
-  PhoneCall,
   HeartPulse,
 } from 'lucide-react';
 import L from 'leaflet';
-import { SHUTTLE_ROUTES, SHUTTLE_STOPS, EMERGENCY_FACILITIES } from '../../data/shuttleData';
+import { SHUTTLE_ROUTES, SHUTTLE_STOPS } from '../../data/shuttleData';
 import transitService from '../../services/transitService';
 import EmergencySosModal from './EmergencySosModal';
+
+/**
+ * Sanitize a string value before injecting into innerHTML to prevent XSS.
+ * Escapes HTML special characters: &, <, >, ", '
+ */
+function escHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 // Stable campus center coordinates for LPU
 const DEFAULT_LPU_CENTER = [31.2530, 75.7045];
@@ -634,7 +646,7 @@ export default function CampusMap({
                   }
                 }
               }
-            } catch (e) {
+            } catch {
               // Graceful fallback to direct stop-to-stop line
             }
           })();
@@ -674,14 +686,14 @@ export default function CampusMap({
         popupDiv.innerHTML = `
           <div class="flex items-center justify-between gap-2">
             <span class="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 tracking-wider">
-              ${stop.code || 'STOP'}
+              ${escHtml(stop.code || 'STOP')}
             </span>
             <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-              ${stop.interval_text || stop.intervalText || 'Next in ~4 min'}
+              ${escHtml(stop.interval_text || stop.intervalText || 'Next in ~4 min')}
             </span>
           </div>
-          <div class="font-bold text-sm text-slate-900 mt-1.5">${stop.name}</div>
-          <div class="text-xs text-slate-500 mt-0.5">${stop.landmark || ''}</div>
+          <div class="font-bold text-sm text-slate-900 mt-1.5">${escHtml(stop.name)}</div>
+          <div class="text-xs text-slate-500 mt-0.5">${escHtml(stop.landmark || '')}</div>
           <div class="mt-3 pt-2 border-t border-slate-100">
             <button type="button" class="nav-stop-btn w-full py-1.5 px-3 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
               <span>Get Directions to Stop ➔</span>
@@ -773,7 +785,7 @@ export default function CampusMap({
                 }
               });
             }
-          } catch (e) {
+          } catch {
             // Ignore polling errors
           }
         }

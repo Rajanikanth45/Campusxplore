@@ -14,7 +14,7 @@ from django.core.exceptions import ImproperlyConfigured
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load environment variables from .env file in backend directory
-load_dotenv(BASE_DIR / '.env')
+load_dotenv(BASE_DIR / '.env', override=True)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY')
@@ -177,10 +177,26 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    # Only expose the browsable API in development; production returns JSON only.
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
+    ] + (['rest_framework.renderers.BrowsableAPIRenderer'] if DEBUG else []),
+    # Rate limiting: apply throttle classes globally.
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
     ],
+    'DEFAULT_THROTTLE_RATES': {
+        # Anonymous users (login/register): 20 requests per minute
+        'anon': '20/minute',
+        # Authenticated users: 300 requests per minute (generous for campus app)
+        'user': '300/minute',
+        # Stricter scope for auth endpoints — applied via ScopedRateThrottle
+        'login': '10/minute',
+        'register': '10/minute',
+        # IoT location updates — applied via ScopedRateThrottle
+        'location_update': '60/minute',
+    },
 }
 
 
@@ -246,14 +262,27 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+# IoT Device Token for e-rickshaw GPS tracker authentication.
+# Set this to a strong random value in production. Leave empty to restrict to admin-only.
+IOT_DEVICE_TOKEN = os.environ.get('IOT_DEVICE_TOKEN', '')
+
+# Security headers applied in ALL environments (safe to have in dev too)
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
+# Session cookie name obfuscation (makes fingerprinting harder)
+SESSION_COOKIE_NAME = 'cx_session'
+CSRF_COOKIE_NAME = 'cx_csrf'
+
 # Production Security Settings
 if not DEBUG:
     SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'True').lower() in ('true', '1', 'yes')
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_BROWSER_XSS_FILTER = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
+    CSRF_COOKIE_HTTPONLY = True
     SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', 31536000))
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True

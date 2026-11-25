@@ -1,6 +1,7 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.throttling import SimpleRateThrottle
 from accounts.models import Role
 from .models import ShuttleRoute, ShuttleStop, ShuttleVehicle
 from .serializers import (
@@ -9,6 +10,17 @@ from .serializers import (
     ShuttleVehicleSerializer,
     VehicleLocationUpdateSerializer,
 )
+
+
+class LocationUpdateThrottle(SimpleRateThrottle):
+    """60 location pings per minute per IP — prevents GPS spoofing floods."""
+    scope = 'location_update'
+
+    def get_cache_key(self, request, view):
+        return self.cache_format % {
+            'scope': self.scope,
+            'ident': self.get_ident(request),
+        }
 
 
 class IsAdminOrPublicReadOnly(permissions.BasePermission):
@@ -21,6 +33,30 @@ class IsAdminOrPublicReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         return bool(request.user and request.user.is_authenticated and request.user.role == Role.ADMIN)
+
+
+class IsIoTDeviceOrAdmin(permissions.BasePermission):
+    """
+    Restricts location-update pings to:
+      1. Authenticated admin users (for testing/manual override), OR
+      2. Requests that supply the shared IoT device token header:
+         X-IoT-Device-Token: <value from IOT_DEVICE_TOKEN env var>
+    This prevents anonymous actors from spoofing e-rickshaw positions.
+    """
+    message = 'Valid IoT device token or admin credentials required.'
+
+    def has_permission(self, request, view):
+        from django.conf import settings
+        # Allow admins to push location updates directly
+        if request.user and request.user.is_authenticated and request.user.role == Role.ADMIN:
+            return True
+        # Allow IoT device token header (shared secret for onboard GPS units)
+        iot_token = getattr(settings, 'IOT_DEVICE_TOKEN', None)
+        if iot_token:
+            supplied = request.META.get('HTTP_X_IOT_DEVICE_TOKEN', '')
+            return bool(supplied and supplied == iot_token)
+        # If no IOT_DEVICE_TOKEN is configured, fall back to requiring admin
+        return False
 
 
 class ShuttleRouteViewSet(viewsets.ModelViewSet):
@@ -68,7 +104,8 @@ class ShuttleVehicleViewSet(viewsets.ModelViewSet):
             qs = qs.filter(route_id=route_id)
         return qs
 
-    @action(detail=True, methods=['post'], permission_classes=[permissions.AllowAny])
+    @action(detail=True, methods=['post'], permission_classes=[IsIoTDeviceOrAdmin],
+            throttle_classes=[LocationUpdateThrottle])
     def update_location(self, request, pk=None):
         """
         IoT / Driver GPS Tracking Ping Endpoint.

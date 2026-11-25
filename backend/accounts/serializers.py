@@ -2,7 +2,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
-from accounts.models import User, Role
+from accounts.models import User
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):

@@ -8,7 +8,6 @@ import {
   Copy,
   Check,
   X,
-  ExternalLink,
   MapPin,
 } from 'lucide-react';
 import { EMERGENCY_FACILITIES } from '../../data/shuttleData';

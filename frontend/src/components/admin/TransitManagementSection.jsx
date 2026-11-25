@@ -10,7 +10,6 @@ import {
   XCircle,
   Radio,
   Search,
-  ExternalLink,
   Info,
   Clock,
   IndianRupee,
@@ -21,7 +20,6 @@ import StopModal from './StopModal';
 import RouteModal from './RouteModal';
 import VehicleModal from './VehicleModal';
 import Spinner from '../common/Spinner';
-import Badge from '../common/Badge';
 
 export default function TransitManagementSection() {
   const [activeSubTab, setActiveSubTab] = useState('stops'); // 'stops' | 'routes' | 'vehicles' | 'how_tracking_works'

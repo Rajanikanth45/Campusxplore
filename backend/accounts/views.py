@@ -2,6 +2,7 @@ from django.db.models import Count
 from rest_framework import generics, status, views, filters
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework_simplejwt.tokens import RefreshToken
 from accounts.models import User, Role
 from accounts.permissions import IsAdminRole
@@ -22,6 +23,8 @@ class RegisterView(generics.CreateAPIView):
     """
     permission_classes = [AllowAny]
     serializer_class = UserRegistrationSerializer
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'register'
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -43,6 +46,8 @@ class LoginView(views.APIView):
     POST /api/auth/login/
     """
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'login'
 
     def post(self, request, *args, **kwargs):
         serializer = UserLoginSerializer(data=request.data, context={'request': request})
