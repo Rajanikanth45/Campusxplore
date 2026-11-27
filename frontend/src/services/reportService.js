@@ -7,6 +7,12 @@ export const reportService = {
    * @returns {Promise<Object>} Created issue report representation
    */
   async createReport(reportData) {
+    if (reportData instanceof FormData) {
+      const response = await api.post('/reports/', reportData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return response.data;
+    }
     const response = await api.post('/reports/', reportData);
     return response.data;
   },

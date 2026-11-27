@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Search, Building2, Filter, ChevronLeft, ChevronRight, RotateCcw, LayoutGrid, Map as MapIcon } from 'lucide-react';
+import { Search, Building2, Filter, ChevronLeft, ChevronRight, RotateCcw, LayoutGrid, Map as MapIcon, Heart, History } from 'lucide-react';
 import useAuth from '../hooks/useAuth';
+import { useToast } from '../context/ToastContext';
 import facilityService from '../services/facilityService';
 import FacilityCard from '../components/facilities/FacilityCard';
 import FacilitySkeleton from '../components/facilities/FacilitySkeleton';
@@ -11,11 +12,21 @@ import Alert from '../components/common/Alert';
 
 export default function FacilitiesPage() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const [facilities, setFacilities] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [favoriteIds, setFavoriteIds] = useState([]);
+  const [showSavedOnly, setShowSavedOnly] = useState(false);
+  const [recentSearches, setRecentSearches] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('campusxplore_recent_searches') || '[]');
+    } catch {
+      return [];
+    }
+  });
   const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,7 +54,7 @@ export default function FacilitiesPage() {
     setBuildingInput(buildingFilter);
   }
 
-  // Load categories taxonomy
+  // Load categories taxonomy & user favorites
   useEffect(() => {
     let isMounted = true;
     facilityService
@@ -54,6 +65,13 @@ export default function FacilitiesPage() {
       .catch((err) => {
         console.error('Failed to load categories:', err);
       });
+
+    facilityService
+      .getFavorites()
+      .then((data) => {
+        if (isMounted) setFavoriteIds(data?.favorite_ids || []);
+      })
+      .catch(() => {});
 
     return () => {
       isMounted = false;
@@ -115,7 +133,29 @@ export default function FacilitiesPage() {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    updateFilter('search', searchInput.trim());
+    const term = searchInput.trim();
+    if (term) {
+      const next = [term, ...recentSearches.filter((t) => t.toLowerCase() !== term.toLowerCase())].slice(0, 5);
+      setRecentSearches(next);
+      try {
+        localStorage.setItem('campusxplore_recent_searches', JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+    }
+    updateFilter('search', term);
+  };
+
+  const handleToggleFavorite = async (facilityId) => {
+    try {
+      const res = await facilityService.toggleFavorite(facilityId);
+      setFavoriteIds((prev) =>
+        res.is_favorited ? [...prev, facilityId] : prev.filter((id) => id !== facilityId)
+      );
+      showToast(res.is_favorited ? 'Saved to favorites' : 'Removed from favorites', 'success');
+    } catch {
+      showToast('Could not update favorite.', 'error');
+    }
   };
 
   const handleBuildingSubmit = (e) => {
@@ -134,73 +174,79 @@ export default function FacilitiesPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 text-left w-full">
-      {/* Page Header with Grid/Map View Toggle */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            Campus Facilities Directory
-          </h1>
-          <p className="text-sm text-slate-500">
-            Search and discover buildings, service points, and study halls across Lovely Professional University.
-          </p>
-        </div>
+      {/* Hero Command Header */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0f1e3d] via-slate-900 to-slate-950 p-6 sm:p-8 border border-slate-800 shadow-xl text-white">
+        <div className="absolute inset-0 bg-dot-grid opacity-25 pointer-events-none" />
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="space-y-1.5">
+            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-orange-500/20 border border-orange-400/30 text-orange-300 text-[11px] font-bold uppercase tracking-wider">
+              <Building2 className="w-3.5 h-3.5" />
+              <span>{totalCount || 14} Campus Locations</span>
+            </div>
+            <h1 className="font-display text-2xl sm:text-4xl font-extrabold tracking-tight">
+              Campus Facilities Directory
+            </h1>
+            <p className="text-sm text-slate-300 max-w-xl">
+              Discover academic blocks, dining hubs, hostels, and services across Lovely Professional University.
+            </p>
+          </div>
 
-        {/* View Switcher */}
-        <div className="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 self-start sm:self-auto shrink-0">
-          <button
-            type="button"
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-indigo-600 shadow-xs border border-slate-200/60 cursor-default"
-            aria-current="page"
-          >
-            <LayoutGrid className="w-4 h-4" />
-            <span>Grid View</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const paramsString = searchParams.toString();
-              navigate(paramsString ? `/map?${paramsString}` : '/map');
-            }}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 transition-all cursor-pointer"
-            title="Switch to Interactive Map"
-          >
-            <MapIcon className="w-4 h-4" />
-            <span>Map View</span>
-          </button>
+          {/* View Switcher */}
+          <div className="inline-flex rounded-xl bg-white/10 backdrop-blur-md p-1 border border-white/15 self-start sm:self-auto shrink-0">
+            <button
+              type="button"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-sm cursor-default"
+              aria-current="page"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              <span>Grid View</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const paramsString = searchParams.toString();
+                navigate(paramsString ? `/map?${paramsString}` : '/map');
+              }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-slate-200 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+              title="Switch to Interactive Map"
+            >
+              <MapIcon className="w-4 h-4" />
+              <span>Map View</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
 
-      {/* Filter Toolbar */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-        {/* Search Row */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-          <form onSubmit={handleSearchSubmit} className="md:col-span-6 flex gap-2">
+      {/* Unified Command Search & Filter Bar */}
+      <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm p-4 sm:p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2.5">
+          <form onSubmit={handleSearchSubmit} className="flex-1 flex gap-2">
             <div className="relative flex-1">
               <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search facility name or keywords..."
+                placeholder="Search facilities, libraries, hostels..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="w-full pl-9 pr-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 bg-white"
+                className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-orange-500 focus:bg-white dark:focus:bg-slate-800"
               />
             </div>
-            <Button type="submit" variant="secondary" size="sm">
+            <Button type="submit" variant="primary" size="sm">
               Search
             </Button>
           </form>
 
-          <form onSubmit={handleBuildingSubmit} className="md:col-span-4 flex gap-2">
+          <form onSubmit={handleBuildingSubmit} className="lg:w-72 flex gap-2">
             <div className="relative flex-1">
               <Building2 className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
               <input
                 type="text"
-                placeholder="Filter building (e.g. Block 37)..."
+                placeholder="Block (e.g. Block 37)..."
                 value={buildingInput}
                 onChange={(e) => setBuildingInput(e.target.value)}
-                className="w-full pl-9 pr-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 bg-white"
+                className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-orange-500 focus:bg-white dark:focus:bg-slate-800"
               />
             </div>
             <Button type="submit" variant="secondary" size="sm">
@@ -208,39 +254,69 @@ export default function FacilitiesPage() {
             </Button>
           </form>
 
-          {/* Admin Active/Inactive Toggle */}
-          {user?.role === 'ADMIN' ? (
-            <div className="md:col-span-2">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowSavedOnly((prev) => !prev)}
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer min-h-[38px] ${
+                showSavedOnly
+                  ? 'bg-rose-50 dark:bg-rose-950/50 border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-300'
+                  : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-rose-300 hover:text-rose-600'
+              }`}
+            >
+              <Heart className={`w-3.5 h-3.5 ${showSavedOnly ? 'fill-rose-500 text-rose-500' : ''}`} />
+              <span>Saved ({favoriteIds.length})</span>
+            </button>
+
+            {user?.role === 'ADMIN' ? (
               <select
                 value={activeFilter}
                 onChange={(e) => updateFilter('is_active', e.target.value)}
-                className="w-full py-2 px-3 text-sm rounded-lg border border-indigo-300 bg-indigo-50/50 text-indigo-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-medium"
+                className="py-2.5 px-3 text-xs rounded-xl border border-orange-300 dark:border-slate-700 bg-orange-50/50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-orange-500 font-semibold"
               >
                 <option value="">All States</option>
                 <option value="true">Active Only</option>
                 <option value="false">Inactive Only</option>
               </select>
-            </div>
-          ) : (
-            <div className="md:col-span-2 flex justify-end">
-              {(selectedCategory || searchKeyword || buildingFilter) && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleResetFilters}
-                  icon={RotateCcw}
-                  className="text-xs text-slate-500"
-                >
-                  Reset
-                </Button>
-              )}
-            </div>
-          )}
+            ) : (selectedCategory || searchKeyword || buildingFilter) ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetFilters}
+                icon={RotateCcw}
+                className="text-xs text-slate-500 dark:text-slate-400"
+              >
+                Reset
+              </Button>
+            ) : null}
+          </div>
         </div>
+
+        {/* Recent Searches */}
+        {recentSearches.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 text-xs">
+            <span className="text-slate-400 font-medium inline-flex items-center gap-1 mr-1">
+              <History className="w-3.5 h-3.5" /> Recent:
+            </span>
+            {recentSearches.map((term) => (
+              <button
+                key={term}
+                type="button"
+                onClick={() => {
+                  setSearchInput(term);
+                  updateFilter('search', term);
+                }}
+                className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-orange-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 hover:text-orange-700 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer text-[11px] font-medium"
+              >
+                {term}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Category Pills Row */}
         {categories.length > 0 && (
-          <div className="pt-2 border-t border-slate-100 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1 mr-1">
               <Filter className="w-3 h-3" />
               <span>Category:</span>
@@ -286,8 +362,13 @@ export default function FacilitiesPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {facilities.map((facility) => (
-              <FacilityCard key={facility.id} facility={facility} />
+            {(showSavedOnly ? facilities.filter((f) => favoriteIds.includes(f.id)) : facilities).map((facility) => (
+              <FacilityCard
+                key={facility.id}
+                facility={facility}
+                isFavorited={favoriteIds.includes(facility.id)}
+                onToggleFavorite={handleToggleFavorite}
+              />
             ))}
           </div>
 

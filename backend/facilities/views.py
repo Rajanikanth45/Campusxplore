@@ -1,10 +1,11 @@
 from django.db.models import Count, Q, ProtectedError
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from accounts.models import Role
-from facilities.models import Category, Facility
+from facilities.models import Category, Facility, FavoriteFacility
 from facilities.serializers import CategorySerializer, FacilitySerializer
 from facilities.permissions import IsAdminOrReadOnly
 from facilities.pagination import FacilityPagination
@@ -142,3 +143,28 @@ class FacilityViewSet(viewsets.ModelViewSet):
         instance.is_active = False
         instance.save(update_fields=['is_active', 'updated_at'])
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def favorites(self, request):
+        """
+        Return the authenticated user's favorited facilities.
+        """
+        fav_ids = list(
+            FavoriteFacility.objects.filter(user=request.user).values_list('facility_id', flat=True)
+        )
+        facilities = Facility.objects.select_related('category').filter(id__in=fav_ids, is_active=True)
+        serializer = self.get_serializer(facilities, many=True)
+        return Response({'favorite_ids': fav_ids, 'results': serializer.data})
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def favorite(self, request, pk=None):
+        """
+        Toggle favorite status on a facility for the authenticated user.
+        """
+        facility = self.get_object()
+        existing = FavoriteFacility.objects.filter(user=request.user, facility=facility).first()
+        if existing:
+            existing.delete()
+            return Response({'is_favorited': False, 'facility_id': facility.id})
+        FavoriteFacility.objects.create(user=request.user, facility=facility)
+        return Response({'is_favorited': True, 'facility_id': facility.id}, status=status.HTTP_201_CREATED)

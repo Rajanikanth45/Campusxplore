@@ -21,21 +21,21 @@ const Input = forwardRef(
     return (
       <div className="w-full space-y-1.5 text-left">
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-slate-700">
+          <label htmlFor={inputId} className="block text-xs font-semibold uppercase tracking-wider text-slate-600">
             {label} {required && <span className="text-rose-500">*</span>}
           </label>
         )}
-        <div className="relative rounded-md shadow-xs">
+        <div className="relative rounded-xl shadow-xs">
           <input
             id={inputId}
             name={name}
             type={type}
             ref={ref}
             required={required}
-            className={`block w-full rounded-lg border px-3.5 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-hidden focus:ring-2 sm:text-sm ${
+            className={`block w-full rounded-xl border px-3.5 py-2.5 text-slate-900 placeholder-slate-400 transition-all focus:outline-hidden focus:ring-4 sm:text-sm ${
               error
-                ? 'border-rose-300 text-rose-900 focus:border-rose-500 focus:ring-rose-500 bg-rose-50/20'
-                : 'border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 bg-white'
+                ? 'border-rose-300 text-rose-900 focus:border-rose-500 focus:ring-rose-500/15 bg-rose-50/30'
+                : 'border-slate-200 hover:border-slate-300 focus:border-indigo-500 focus:ring-indigo-500/15 bg-slate-50/50 focus:bg-white'
             } ${rightElement ? 'pr-10' : ''} ${className}`}
             {...props}
           />

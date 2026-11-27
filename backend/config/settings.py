@@ -3,6 +3,7 @@ Django settings for config project.
 """
 
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
@@ -29,6 +30,7 @@ if not JWT_SIGNING_KEY:
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 'yes')
+TESTING = 'test' in sys.argv
 
 ALLOWED_HOSTS = [
     host.strip()
@@ -62,6 +64,7 @@ INSTALLED_APPS = [
     'facilities',
     'reports',
     'transit',
+    'bookings',
 ]
 
 # Custom User Model
@@ -187,15 +190,11 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        # Anonymous users (login/register): 20 requests per minute
-        'anon': '20/minute',
-        # Authenticated users: 300 requests per minute (generous for campus app)
-        'user': '300/minute',
-        # Stricter scope for auth endpoints — applied via ScopedRateThrottle
-        'login': '10/minute',
-        'register': '10/minute',
-        # IoT location updates — applied via ScopedRateThrottle
-        'location_update': '60/minute',
+        'anon': '10000/minute' if TESTING else '20/minute',
+        'user': '10000/minute' if TESTING else '300/minute',
+        'login': '10000/minute' if TESTING else '10/minute',
+        'register': '10000/minute' if TESTING else '10/minute',
+        'location_update': '10000/minute' if TESTING else '60/minute',
     },
 }
 
@@ -255,6 +254,9 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

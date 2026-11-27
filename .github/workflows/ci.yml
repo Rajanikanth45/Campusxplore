@@ -1,0 +1,62 @@
+name: CampusXplore CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: campusxplore_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install backend dependencies
+        run: pip install -r backend/requirements.txt
+      - name: Django check & tests
+        working-directory: backend
+        env:
+          DEBUG: 'False'
+          SECRET_KEY: 'ci-test-secret-key-not-used-in-production'
+          JWT_SIGNING_KEY: 'ci-test-jwt-signing-key-not-used-in-production'
+          DB_NAME: campusxplore_test
+          DB_USER: postgres
+          DB_PASSWORD: postgres_ci_password
+          DB_HOST: 127.0.0.1
+          DB_PORT: '5432'
+        run: |
+          python manage.py check
+          python manage.py test
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Lint & Build
+        working-directory: frontend
+        run: |
+          npm run lint
+          npm run build

@@ -88,6 +88,33 @@ const transitService = {
     });
     return res.data;
   },
+
+  // Demo Simulator: advance all active vehicles along their route
+  simulateStep: async () => {
+    const res = await api.post('/transit/vehicles/simulate_step/');
+    return res.data;
+  },
+
+  // Emergency SOS Posts
+  getEmergencyPosts: async () => {
+    const res = await api.get('/transit/emergency/');
+    return res.data;
+  },
+
+  createEmergencyPost: async (data) => {
+    const res = await api.post('/transit/emergency/', data);
+    return res.data;
+  },
+
+  updateEmergencyPost: async (id, data) => {
+    const res = await api.patch(`/transit/emergency/${id}/`, data);
+    return res.data;
+  },
+
+  deleteEmergencyPost: async (id) => {
+    const res = await api.delete(`/transit/emergency/${id}/`);
+    return res.data;
+  },
 };
 
 export default transitService;

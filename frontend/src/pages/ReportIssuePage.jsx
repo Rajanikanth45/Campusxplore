@@ -73,6 +73,7 @@ export default function ReportIssuePage() {
   const [issueType, setIssueType] = useState('MAINTENANCE');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [attachment, setAttachment] = useState(null);
 
   // UI / Async State
   const [facilities, setFacilities] = useState([]);
@@ -186,12 +187,22 @@ export default function ReportIssuePage() {
     setIsSubmitting(true);
 
     try {
-      const payload = {
-        facility: parseInt(facilityId, 10),
-        title: title.trim(),
-        description: description.trim(),
-        issue_type: issueType,
-      };
+      let payload;
+      if (attachment) {
+        payload = new FormData();
+        payload.append('facility', String(parseInt(facilityId, 10)));
+        payload.append('title', title.trim());
+        payload.append('description', description.trim());
+        payload.append('issue_type', issueType);
+        payload.append('attachment', attachment);
+      } else {
+        payload = {
+          facility: parseInt(facilityId, 10),
+          title: title.trim(),
+          description: description.trim(),
+          issue_type: issueType,
+        };
+      }
 
       const response = await reportService.createReport(payload);
       setSubmittedReport(response);
@@ -554,6 +565,26 @@ export default function ReportIssuePage() {
             ) : (
               <p className="text-xs text-slate-400">
                 Include room numbers, floor information, or specific equipment IDs if known.
+              </p>
+            )}
+          </div>
+
+          {/* Optional Photo Attachment */}
+          <div className="space-y-1.5">
+            <label htmlFor="reportAttachment" className="block text-sm font-semibold text-slate-900">
+              Photo Evidence <span className="text-xs font-normal text-slate-400">(Optional — JPG, PNG, WebP)</span>
+            </label>
+            <input
+              id="reportAttachment"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+              disabled={isSubmitting}
+              className="block w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-3.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer"
+            />
+            {attachment && (
+              <p className="text-xs text-emerald-600 font-medium">
+                Selected: {attachment.name}
               </p>
             )}
           </div>

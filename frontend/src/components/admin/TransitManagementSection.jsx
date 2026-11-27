@@ -28,6 +28,16 @@ export default function TransitManagementSection() {
   const [routes, setRoutes] = useState([]);
   const [stops, setStops] = useState([]);
   const [vehicles, setVehicles] = useState([]);
+  const [emergencyPosts, setEmergencyPosts] = useState([]);
+  const [newEmergency, setNewEmergency] = useState({
+    name: '',
+    category: 'MEDICAL',
+    building: '',
+    phone: '',
+    latitude: '31.255000',
+    longitude: '75.702000',
+    description: '',
+  });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRouteFilter, setSelectedRouteFilter] = useState('');
@@ -48,14 +58,16 @@ export default function TransitManagementSection() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [rData, sData, vData] = await Promise.all([
+      const [rData, sData, vData, eData] = await Promise.all([
         transitService.getRoutes(),
         transitService.getStops(),
         transitService.getVehicles(),
+        transitService.getEmergencyPosts().catch(() => []),
       ]);
       setRoutes(rData || []);
       setStops(sData || []);
       setVehicles(vData || []);
+      setEmergencyPosts(eData || []);
     } catch (err) {
       console.error('Failed to load transit records:', err);
     } finally {
@@ -195,17 +207,41 @@ export default function TransitManagementSection() {
           </p>
         </div>
 
-        {/* Quick Stats */}
-        <div className="flex items-center gap-3">
-          <div className="bg-white px-4 py-2.5 rounded-xl border border-slate-200 shadow-xs text-center">
+        {/* Quick Stats & Live Fleet Simulator */}
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                const res = await transitService.simulateStep();
+                setPingStatus((prev) => ({
+                  ...prev,
+                  _global: `Advanced ${res?.length || 0} active vehicle(s) to their next stop!`,
+                }));
+                await loadData();
+              } catch (err) {
+                setPingStatus((prev) => ({
+                  ...prev,
+                  _global: 'Simulator error: ' + (err.response?.data?.detail || err.message),
+                }));
+              }
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+            title="Advance every ACTIVE e-rickshaw to the next stop on its route for live map demos"
+          >
+            <Radio className="w-4 h-4 animate-pulse" />
+            <span>Simulate Live Fleet</span>
+          </button>
+
+          <div className="bg-white dark:bg-slate-900 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs text-center">
             <div className="text-xs font-semibold text-slate-500">Lines</div>
             <div className="text-lg font-black text-amber-600">{routes.length}</div>
           </div>
-          <div className="bg-white px-4 py-2.5 rounded-xl border border-slate-200 shadow-xs text-center">
+          <div className="bg-white dark:bg-slate-900 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs text-center">
             <div className="text-xs font-semibold text-slate-500">Stops</div>
-            <div className="text-lg font-black text-slate-800">{stops.length}</div>
+            <div className="text-lg font-black text-slate-800 dark:text-white">{stops.length}</div>
           </div>
-          <div className="bg-white px-4 py-2.5 rounded-xl border border-slate-200 shadow-xs text-center">
+          <div className="bg-white dark:bg-slate-900 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs text-center">
             <div className="text-xs font-semibold text-slate-500">Fleet</div>
             <div className="text-lg font-black text-emerald-600">{vehicles.length}</div>
           </div>
@@ -251,6 +287,18 @@ export default function TransitManagementSection() {
         >
           <Truck className="w-4 h-4" />
           <span>E-Rickshaws & Tracking ({vehicles.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('emergency')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+            activeSubTab === 'emergency'
+              ? 'bg-rose-600 text-white shadow-xs'
+              : 'bg-rose-50 hover:bg-rose-100 text-rose-700'
+          }`}
+        >
+          <span>🚨 Emergency Posts ({emergencyPosts.length})</span>
         </button>
 
         <button
@@ -727,6 +775,129 @@ export default function TransitManagementSection() {
             <div className="text-xs text-amber-900 space-y-1">
               <strong>Admin Testing Tip:</strong> You can test this right now without real hardware! Switch to the <strong>"E-Rickshaws & Tracking"</strong> tab above and click <strong>"Simulate Real-time GPS Ping"</strong>. The backend will update the coordinates in PostgreSQL and the map will reflect the new position immediately!
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUBTAB 5: EMERGENCY SOS POSTS MANAGEMENT */}
+      {!loading && activeSubTab === 'emergency' && (
+        <div className="space-y-5">
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!newEmergency.name.trim() || !newEmergency.phone.trim()) return;
+              try {
+                await transitService.createEmergencyPost({
+                  ...newEmergency,
+                  latitude: parseFloat(newEmergency.latitude),
+                  longitude: parseFloat(newEmergency.longitude),
+                });
+                setNewEmergency({
+                  name: '',
+                  category: 'MEDICAL',
+                  building: '',
+                  phone: '',
+                  latitude: '31.255000',
+                  longitude: '75.702000',
+                  description: '',
+                });
+                await loadData();
+              } catch (err) {
+                alert('Failed to add emergency post: ' + (err.response?.data?.detail || err.message));
+              }
+            }}
+            className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-3"
+          >
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Add Emergency SOS Post</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <input
+                type="text"
+                placeholder="Post Name (e.g. Hostel Security Desk)"
+                value={newEmergency.name}
+                onChange={(e) => setNewEmergency({ ...newEmergency, name: e.target.value })}
+                className="px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                required
+              />
+              <select
+                value={newEmergency.category}
+                onChange={(e) => setNewEmergency({ ...newEmergency, category: e.target.value })}
+                className="px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+              >
+                <option value="MEDICAL">Medical / Hospital</option>
+                <option value="SECURITY">Security Post</option>
+                <option value="AMBULANCE">Ambulance Dispatch</option>
+              </select>
+              <input
+                type="text"
+                placeholder="Phone (e.g. +91 1824 517000)"
+                value={newEmergency.phone}
+                onChange={(e) => setNewEmergency({ ...newEmergency, phone: e.target.value })}
+                className="px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                required
+              />
+              <input
+                type="text"
+                placeholder="Building / Location"
+                value={newEmergency.building}
+                onChange={(e) => setNewEmergency({ ...newEmergency, building: e.target.value })}
+                className="px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+              />
+              <input
+                type="text"
+                placeholder="Latitude"
+                value={newEmergency.latitude}
+                onChange={(e) => setNewEmergency({ ...newEmergency, latitude: e.target.value })}
+                className="px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                required
+              />
+              <input
+                type="text"
+                placeholder="Longitude"
+                value={newEmergency.longitude}
+                onChange={(e) => setNewEmergency({ ...newEmergency, longitude: e.target.value })}
+                className="px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold cursor-pointer"
+            >
+              + Add Emergency Post
+            </button>
+          </form>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {emergencyPosts.map((post) => (
+              <div
+                key={post.id}
+                className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-start justify-between gap-3"
+              >
+                <div className="space-y-1 text-xs">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                    {post.category}
+                  </span>
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">{post.name}</h4>
+                  <p className="text-slate-500">{post.building} • {post.phone}</p>
+                  <p className="font-mono text-[11px] text-slate-400">
+                    {post.latitude}, {post.longitude}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (window.confirm(`Delete emergency post "${post.name}"?`)) {
+                      await transitService.deleteEmergencyPost(post.id);
+                      await loadData();
+                    }
+                  }}
+                  className="p-2 rounded-lg text-rose-600 hover:bg-rose-50 cursor-pointer"
+                  title="Delete Emergency Post"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       )}

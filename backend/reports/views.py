@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from accounts.models import Role
+from core.models import Notification
 from reports.models import IssueReport, IssueStatus
 from reports.serializers import (
     IssueReportReadSerializer,
@@ -80,8 +81,16 @@ class IssueReportViewSet(viewsets.ModelViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
+        old_status = instance.status
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         updated_instance = serializer.save()
+        if updated_instance.status != old_status:
+            Notification.objects.create(
+                user=updated_instance.user,
+                title=f"Report {updated_instance.status.replace('_', ' ').title()}",
+                message=f"Your issue '{updated_instance.title}' at {updated_instance.facility.name} is now {updated_instance.status.replace('_', ' ').lower()}.",
+                link=f"/reports/{updated_instance.id}",
+            )
         read_serializer = IssueReportReadSerializer(updated_instance, context=self.get_serializer_context())
         return Response(read_serializer.data, status=status.HTTP_200_OK)

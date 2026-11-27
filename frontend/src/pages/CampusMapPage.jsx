@@ -50,6 +50,24 @@ export default function CampusMapPage() {
   const buildingFilter = searchParams.get('building') || '';
   const activeFilter = searchParams.get('is_active') || '';
   const selectedFacilityId = searchParams.get('facility') || '';
+  const autoDirections = searchParams.get('directions') === '1';
+
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    try {
+      return !localStorage.getItem('campusxplore_map_onboarded');
+    } catch {
+      return false;
+    }
+  });
+
+  const dismissOnboarding = () => {
+    setShowOnboarding(false);
+    try {
+      localStorage.setItem('campusxplore_map_onboarded', '1');
+    } catch {
+      // ignore
+    }
+  };
 
   const [searchInput, setSearchInput] = useState(searchKeyword);
   const [buildingInput, setBuildingInput] = useState(buildingFilter);
@@ -168,20 +186,20 @@ export default function CampusMapPage() {
       {/* Page Header with Grid/Map View Toggle */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+          <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
             <span>Interactive Campus Map</span>
           </h1>
-          <p className="text-sm text-slate-500">
-            Explore facilities, buildings, and navigation markers across Lovely Professional University.
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Switch between Street, Satellite &amp; Dark views, track live e-rickshaws, or trigger 1-tap Emergency SOS.
           </p>
         </div>
 
         {/* View Switcher */}
-        <div className="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 self-start sm:self-auto shrink-0">
+        <div className="inline-flex rounded-xl bg-white dark:bg-slate-900 p-1 border border-slate-200 dark:border-slate-700 shadow-xs self-start sm:self-auto shrink-0">
           <button
             type="button"
             onClick={handleSwitchToGrid}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
             title="Switch to Grid View"
           >
             <LayoutGrid className="w-4 h-4" />
@@ -189,7 +207,7 @@ export default function CampusMapPage() {
           </button>
           <button
             type="button"
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-indigo-600 shadow-xs border border-slate-200/60 cursor-default"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-xs cursor-default"
             aria-current="page"
           >
             <MapIcon className="w-4 h-4" />
@@ -211,7 +229,7 @@ export default function CampusMapPage() {
       )}
 
       {/* Filter Toolbar */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+      <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
         {/* Search Row */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
           <form onSubmit={handleSearchSubmit} className="md:col-span-6 flex gap-2">
@@ -222,7 +240,7 @@ export default function CampusMapPage() {
                 placeholder="Search facility name or keywords..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="w-full pl-9 pr-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 bg-white"
+                className="w-full pl-9 pr-3.5 py-2 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <Button type="submit" variant="secondary" size="sm">
@@ -238,7 +256,7 @@ export default function CampusMapPage() {
                 placeholder="Filter building (e.g. Block 37)..."
                 value={buildingInput}
                 onChange={(e) => setBuildingInput(e.target.value)}
-                className="w-full pl-9 pr-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 bg-white"
+                className="w-full pl-9 pr-3.5 py-2 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <Button type="submit" variant="secondary" size="sm">
@@ -252,7 +270,7 @@ export default function CampusMapPage() {
               <select
                 value={activeFilter}
                 onChange={(e) => updateFilter('is_active', e.target.value)}
-                className="w-full py-2 px-3 text-sm rounded-lg border border-indigo-300 bg-indigo-50/50 text-indigo-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-medium"
+                className="w-full py-2 px-3 text-sm rounded-xl border border-orange-300 dark:border-slate-700 bg-orange-50/50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-orange-500 font-medium"
               >
                 <option value="">All States</option>
                 <option value="true">Active Only</option>
@@ -267,7 +285,7 @@ export default function CampusMapPage() {
                   size="sm"
                   onClick={handleResetFilters}
                   icon={RotateCcw}
-                  className="text-xs text-slate-500"
+                  className="text-xs text-slate-500 dark:text-slate-400"
                 >
                   Reset
                 </Button>
@@ -278,7 +296,7 @@ export default function CampusMapPage() {
 
         {/* Category Pills Row */}
         {categories.length > 0 && (
-          <div className="pt-2 border-t border-slate-100 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1 mr-1">
               <Filter className="w-3 h-3" />
               <span>Category:</span>
@@ -319,6 +337,25 @@ export default function CampusMapPage() {
         )}
       </div>
 
+      {/* First-time Onboarding Tip */}
+      {showOnboarding && (
+        <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/60 rounded-2xl px-4 py-3 flex items-center justify-between gap-3 text-xs text-orange-900 dark:text-orange-200">
+          <div className="flex items-center gap-2">
+            <Info className="w-4 h-4 text-orange-600 shrink-0" />
+            <span>
+              <strong>Tip:</strong> Tap <strong>Shuttles &amp; E-Rickshaws</strong> for live routes, click any pin for walking directions, or tap <strong>SOS Emergency</strong> for UniHospital fast-path.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={dismissOnboarding}
+            className="px-2.5 py-1 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-semibold shrink-0 cursor-pointer"
+          >
+            Got it
+          </button>
+        </div>
+      )}
+
       {/* Map Content Area */}
       {isLoading ? (
         <div className="w-full h-[600px] bg-slate-100 rounded-2xl border border-slate-200 flex flex-col items-center justify-center space-y-3 animate-pulse">
@@ -339,10 +376,11 @@ export default function CampusMapPage() {
           </Button>
         </div>
       ) : (
-        <div className="w-full h-[620px] rounded-2xl overflow-hidden shadow-xs border border-slate-200">
+        <div className="w-full h-[680px] rounded-3xl overflow-hidden shadow-xl border border-slate-200 dark:border-slate-800">
           <CampusMap
             facilities={mappedFacilities}
             selectedFacilityId={selectedFacilityId}
+            autoDirections={autoDirections}
             height="100%"
           />
         </div>

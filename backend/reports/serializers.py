@@ -52,6 +52,7 @@ class IssueReportReadSerializer(serializers.ModelSerializer):
             'description',
             'issue_type',
             'status',
+            'attachment',
             'created_at',
             'updated_at',
         )
@@ -117,6 +118,7 @@ class IssueReportCreateSerializer(serializers.ModelSerializer):
             'description',
             'issue_type',
             'status',
+            'attachment',
             'created_at',
         )
         read_only_fields = ('id', 'status', 'created_at')

@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.core.validators import FileExtensionValidator
 from django.utils.translation import gettext_lazy as _
 
 
@@ -48,6 +49,13 @@ class IssueReport(models.Model):
         choices=IssueStatus.choices,
         default=IssueStatus.PENDING,
         help_text=_('Current resolution status of the issue')
+    )
+    attachment = models.FileField(
+        upload_to='report_attachments/',
+        null=True,
+        blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'webp'])],
+        help_text=_('Optional photo evidence of the facility issue')
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -144,6 +144,22 @@ export const facilityService = {
     const response = await api.delete(`/categories/${id}/`);
     return response.data;
   },
+
+  /**
+   * Fetch user's favorited facilities and IDs.
+   */
+  async getFavorites() {
+    const response = await api.get('/facilities/favorites/');
+    return response.data;
+  },
+
+  /**
+   * Toggle favorite status on a facility.
+   */
+  async toggleFavorite(id) {
+    const response = await api.post(`/facilities/${id}/favorite/`);
+    return response.data;
+  },
 };
 
 export default facilityService;

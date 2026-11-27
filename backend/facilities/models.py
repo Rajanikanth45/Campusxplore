@@ -1,4 +1,5 @@
 from decimal import Decimal
+from django.conf import settings
 from django.db import models
 from django.db.models.functions import Lower
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -107,3 +108,32 @@ class Facility(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.building})"
+
+
+class FavoriteFacility(models.Model):
+    """
+    User-bookmarked campus facility for quick access.
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='favorite_facilities',
+    )
+    facility = models.ForeignKey(
+        Facility,
+        on_delete=models.CASCADE,
+        related_name='favorited_by',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'facility'],
+                name='unique_user_favorite_facility',
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.user.email} ★ {self.facility.name}"

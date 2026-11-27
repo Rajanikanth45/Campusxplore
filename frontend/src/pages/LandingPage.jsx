@@ -7,18 +7,21 @@ import {
   Building2,
   Navigation,
   ShieldCheck,
-  AlertTriangle,
   ArrowRight,
   MapPin,
   Layers,
   Sparkles,
   ChevronRight,
-  Cpu,
   Radio,
   FileCheck,
-  Check,
-  Zap,
   Search,
+  Siren,
+  Truck,
+  Clock,
+  PhoneCall,
+  HeartPulse,
+  CheckCircle2,
+  Calendar,
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -27,7 +30,7 @@ export default function LandingPage() {
   const [healthStatus, setHealthStatus] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategoryFilter, setActiveCategoryFilter] = useState('ALL');
-  const [activeReportStep, setActiveReportStep] = useState(1); // 0: PENDING, 1: IN_PROGRESS, 2: RESOLVED
+  const [activeReportStep, setActiveReportStep] = useState(1);
 
   useEffect(() => {
     let isMounted = true;
@@ -45,7 +48,6 @@ export default function LandingPage() {
     };
   }, []);
 
-  // Handle hero search form submission - routes to actual facilities directory
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     const query = searchQuery.trim();
@@ -60,7 +62,6 @@ export default function LandingPage() {
     navigate(`/facilities?search=${encodeURIComponent(tag)}`);
   };
 
-  // Real campus facility nodes across LPU's 600+ acre grounds
   const campusFacilities = [
     {
       id: 0,
@@ -68,12 +69,11 @@ export default function LandingPage() {
       block: 'Block 37',
       category: 'ACADEMIC',
       categoryLabel: 'Academic & Research',
+      accent: 'from-[#0f1e3d] to-sky-700',
       status: 'Open Today',
       hours: '08:00 AM – 10:00 PM',
-      coordinates: '31.2536° N, 75.7032° E',
       specs: '4 Floors • 150,000+ Volumes • Digital Media Wing',
       floor: 'Floors 1–4',
-      contact: '+91 1824 517100',
     },
     {
       id: 1,
@@ -81,12 +81,11 @@ export default function LandingPage() {
       block: 'Shanti Devi Stadium',
       category: 'SPORTS',
       categoryLabel: 'Athletics & Fitness',
+      accent: 'from-emerald-500 to-teal-600',
       status: 'Open Today',
       hours: '06:00 AM – 09:00 PM',
-      coordinates: '31.2570° N, 75.7080° E',
       specs: 'Olympic Badminton • Basketball Arena • High-Performance Gym',
       floor: 'Ground & Mezzanine',
-      contact: '+91 1824 517350',
     },
     {
       id: 2,
@@ -94,12 +93,11 @@ export default function LandingPage() {
       block: 'Central Avenue',
       category: 'COMMERCIAL',
       categoryLabel: 'Dining & Commerce',
+      accent: 'from-orange-500 to-amber-600',
       status: 'Open Today',
       hours: '08:00 AM – 11:00 PM',
-      coordinates: '31.2534° N, 75.7036° E',
       specs: '40+ Dining Outlets • Banking Hub • Stationery & Postal Service',
       floor: 'Floors G–3',
-      contact: '+91 1824 517400',
     },
     {
       id: 3,
@@ -107,12 +105,11 @@ export default function LandingPage() {
       block: 'Block 38',
       category: 'ACADEMIC',
       categoryLabel: 'Engineering & Labs',
+      accent: 'from-sky-500 to-blue-600',
       status: 'Open Today',
       hours: '09:00 AM – 06:00 PM',
-      coordinates: '31.2548° N, 75.7061° E',
       specs: 'AI Innovation Hub • Robotics Cluster • Cloud Datacenter',
       floor: 'Floors 2–5',
-      contact: '+91 1824 517220',
     },
     {
       id: 4,
@@ -120,288 +117,379 @@ export default function LandingPage() {
       block: 'Block 13',
       category: 'SERVICES',
       categoryLabel: 'Arts & Convocations',
-      status: 'Event Access Only',
+      accent: 'from-amber-500 to-orange-600',
+      status: 'Event Access',
       hours: '09:00 AM – 08:00 PM',
-      coordinates: '31.2562° N, 75.7045° E',
       specs: '2,500 Seater Acoustic Hall • Global Symposia Stage',
       floor: 'Ground & Balcony',
-      contact: '+91 1824 517112',
+    },
+    {
+      id: 5,
+      name: 'UniHospital Medical Center',
+      block: 'Block 30',
+      category: 'SERVICES',
+      categoryLabel: '24/7 Healthcare & SOS',
+      accent: 'from-rose-500 to-red-600',
+      status: '24/7 Emergency',
+      hours: 'Open 24 Hours',
+      specs: 'Emergency Trauma • Ambulance Dispatch • Pharmacy & Diagnostics',
+      floor: 'Ground Floor',
     },
   ];
 
-  // Filtered facilities for Directory section
   const filteredFacilities =
     activeCategoryFilter === 'ALL'
       ? campusFacilities
       : campusFacilities.filter((f) => f.category === activeCategoryFilter);
 
-  // Ticket states for Issue Reporting showcase
   const reportStages = [
     {
       step: 0,
-      title: 'Report Submitted',
       badge: 'PENDING',
-      badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
+      badgeClass: 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800',
       timestamp: 'Today at 09:14 AM',
       actor: 'Student (Reg: 12108422)',
-      desc: 'Elevator 2 in Block 37 (Library) displays floor sensor calibration fault. Submitted with geolocated photo.',
+      desc: 'Elevator 2 in Block 37 (Library) displays floor sensor calibration fault. Submitted with photo evidence.',
     },
     {
       step: 1,
-      title: 'Triage & In Progress',
       badge: 'IN PROGRESS',
-      badgeClass: 'bg-sky-50 text-sky-800 border-sky-200',
+      badgeClass: 'bg-sky-50 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border-sky-200 dark:border-sky-800',
       timestamp: 'Today at 10:25 AM',
       actor: 'Campus Estate Services (Faculty/Admin)',
       desc: 'Technician team dispatched. Sensor hardware recalibrated; final safety inspection in progress.',
     },
     {
       step: 2,
-      title: 'Audited & Resolved',
       badge: 'RESOLVED',
-      badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+      badgeClass: 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
       timestamp: 'Today at 01:40 PM',
       actor: 'Chief Facility Officer (Admin)',
-      desc: 'Hydraulic sensor calibrated, 10-point safety test passed. Ticket closed with signed audit entry.',
+      desc: 'Hydraulic sensor calibrated, 10-point safety test passed. Ticket closed & student notified.',
     },
   ];
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 selection:bg-violet-100 selection:text-violet-900 font-sans">
+    <div className="min-h-screen bg-transparent text-slate-900 dark:text-slate-100 selection:bg-orange-100 selection:text-orange-900 font-sans">
       {/* =========================================================================
-          1. HERO SECTION: CINEMATIC PHOTOGRAPHIC BACKDROP (STUVÉDA-INSPIRED COMPOSITION)
+          1. LPU NAVY + ORANGE CINEMATIC HERO WITH LIVE TELEMETRY HUD
           ========================================================================= */}
-      <section className="px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-12 max-w-7xl mx-auto">
-        <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-slate-200/90 min-h-[620px] lg:min-h-[720px] lg:max-h-[820px] flex flex-col justify-between">
-          {/* High-Resolution Aerial Campus Photographic Background */}
+      <section className="px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-10 max-w-7xl mx-auto">
+        <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-slate-900/25 border border-slate-200/80 dark:border-slate-800 min-h-[640px] lg:min-h-[690px] flex flex-col justify-between bg-[#0a1326]">
+          {/* Campus Aerial Backdrop */}
           <div
-            className="absolute inset-0 bg-cover bg-center transition-transform duration-700 hover:scale-105 pointer-events-none"
-            style={{
-              backgroundImage: "url('/lpu_campus_hero.jpg')",
-            }}
+            className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105 pointer-events-none opacity-80"
+            style={{ backgroundImage: "url('/lpu_campus_hero.jpg')" }}
           />
 
-          {/* Sophisticated Dark Multi-Layer Gradient Overlays for Supreme Readability */}
-          <div className="absolute inset-0 bg-linear-to-r from-slate-950/92 via-slate-950/75 to-slate-900/35 pointer-events-none" />
-          <div className="absolute inset-0 bg-linear-to-t from-slate-950/90 via-transparent to-slate-950/30 pointer-events-none" />
+          {/* Layered Atmospheric Gradients */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#081021]/95 via-[#0f1e3d]/80 to-[#0f1e3d]/45 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#081021]/95 via-transparent to-[#081021]/45 pointer-events-none" />
+          <div className="absolute inset-0 bg-dot-grid opacity-20 pointer-events-none" />
 
-          {/* Top Bar: Location Badge & Status Pulse */}
+          {/* Top Bar */}
           <div className="relative z-10 p-6 sm:p-10 flex flex-wrap items-center justify-between gap-4">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-medium tracking-wide shadow-lg">
-              <MapPin className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Lovely Professional University, Punjab</span>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-semibold tracking-wide shadow-lg">
+              <MapPin className="w-3.5 h-3.5 text-orange-400" />
+              <span>Lovely Professional University • 600+ Acres</span>
             </div>
 
-            <div className="flex items-center space-x-3 text-xs font-mono text-slate-300">
-              <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/70 backdrop-blur-md border border-slate-700/80">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>{healthStatus?.status === 'ok' ? 'API MESH LIVE' : 'CONNECTING...'}</span>
+            <div className="flex items-center space-x-3 text-xs font-mono text-slate-200">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/75 backdrop-blur-md border border-white/15">
+                <span className={`w-2 h-2 rounded-full ${healthStatus?.status === 'ok' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400 animate-pulse'}`} />
+                <span>{healthStatus?.status === 'ok' ? 'SYSTEMS ONLINE' : 'CONNECTING...'}</span>
               </span>
-              <span className="hidden md:inline text-slate-400">31.2536° N, 75.7032° E</span>
+              <span className="hidden md:inline text-slate-300">31.2536° N, 75.7032° E</span>
             </div>
           </div>
 
-          {/* Hero Main Content (Headline, Supporting Copy, Form, CTAs) */}
-          <div className="relative z-10 px-6 sm:px-10 pb-8 sm:pb-12 max-w-3xl space-y-6">
-            <div className="inline-flex items-center gap-2 text-cyan-300 font-mono text-xs tracking-widest uppercase font-semibold">
-              <Compass className="w-4 h-4 text-cyan-400" />
-              <span>Spatial Campus Navigation & Discovery</span>
-            </div>
-
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.08] text-white">
-              Explore Your Campus{' '}
-              <span className="bg-linear-to-r from-violet-300 via-indigo-200 to-cyan-300 bg-clip-text text-transparent">
-                Like Never Before.
-              </span>
-            </h1>
-
-            <p className="text-base sm:text-lg text-slate-200 leading-relaxed font-normal max-w-2xl drop-shadow-xs">
-              The centralized spatial intelligence and facility governance ecosystem for Lovely Professional University. Seamlessly locate academic blocks, access verified operating schedules, and track campus maintenance in real time.
-            </p>
-
-            {/* Interactive Campus Search Bar Form */}
-            <form onSubmit={handleSearchSubmit} className="pt-2">
-              <div className="bg-white/10 backdrop-blur-xl border border-white/25 rounded-2xl p-2 sm:p-2.5 shadow-2xl flex flex-col sm:flex-row items-center gap-2 max-w-2xl">
-                <div className="flex items-center w-full px-3 gap-2">
-                  <Search className="w-5 h-5 text-cyan-300 shrink-0" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search facilities, blocks, libraries, stadiums..."
-                    className="w-full bg-transparent text-white placeholder-white/70 text-sm sm:text-base focus:outline-hidden"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-sm shadow-lg shadow-violet-600/30 transition-all cursor-pointer"
-                >
-                  <span>Search</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
+          {/* Main Hero Grid */}
+          <div className="relative z-10 px-6 sm:px-10 pb-8 sm:pb-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+            {/* Left Column */}
+            <div className="lg:col-span-7 space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/20 border border-orange-400/35 text-orange-200 text-xs font-semibold tracking-wide">
+                <Sparkles className="w-3.5 h-3.5 text-orange-300" />
+                <span>Smart Campus Navigation &amp; Mobility</span>
               </div>
 
-              {/* Quick Search Chips */}
-              <div className="flex flex-wrap items-center gap-2 pt-3 text-xs text-slate-300">
-                <span className="text-slate-400 font-medium">Popular:</span>
-                {['Central Library', 'Block 37', 'Indoor Sports Complex', 'UniMall Plaza', 'Block 38'].map((tag) => (
+              <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.07] text-white">
+                Explore LPU{' '}
+                <span className="bg-gradient-to-r from-orange-400 via-amber-300 to-orange-200 bg-clip-text text-transparent">
+                  Without Guesswork.
+                </span>
+              </h1>
+
+              <p className="text-sm sm:text-base text-slate-200/90 leading-relaxed max-w-xl">
+                Locate any block, lab, or food court in seconds. Track live campus e-rickshaws, book seminar halls, trigger 1-tap Emergency SOS, and report facility issues in real time.
+              </p>
+
+              {/* Search Bar */}
+              <form onSubmit={handleSearchSubmit} className="pt-1">
+                <div className="bg-white/12 backdrop-blur-xl border border-white/25 rounded-2xl p-2 shadow-2xl flex flex-col sm:flex-row items-center gap-2 max-w-xl focus-within:border-orange-400/80 transition-colors">
+                  <div className="flex items-center w-full px-3 gap-2.5">
+                    <Search className="w-5 h-5 text-orange-300 shrink-0" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search Block 37, Library, UniHospital, BH-4..."
+                      className="w-full bg-transparent text-white placeholder-slate-300/80 text-sm sm:text-base focus:outline-hidden py-1.5"
+                    />
+                  </div>
                   <button
-                    key={tag}
-                    type="button"
-                    onClick={() => handleQuickTagClick(tag)}
-                    className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white border border-white/15 transition-all text-[11px] cursor-pointer"
+                    type="submit"
+                    className="w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-bold text-sm shadow-lg shadow-orange-500/30 transition-all cursor-pointer"
                   >
-                    {tag}
+                    <span>Search</span>
+                    <ArrowRight className="w-4 h-4" />
                   </button>
-                ))}
-              </div>
-            </form>
+                </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-wrap items-center gap-4 pt-2">
+                {/* Quick Chips */}
+                <div className="flex flex-wrap items-center gap-2 pt-3 text-xs text-slate-300">
+                  <span className="text-slate-400 font-medium">Popular:</span>
+                  {['Central Library', 'Block 37', 'UniHospital', 'UniMall', 'Block 38'].map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => handleQuickTagClick(tag)}
+                      className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-orange-500/25 text-white border border-white/15 hover:border-orange-400/40 transition-all text-[11px] font-medium cursor-pointer"
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </form>
+
+              {/* Primary CTAs */}
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <Link
+                  to="/map"
+                  className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-white hover:bg-orange-50 text-[#0f1e3d] font-bold text-sm shadow-xl transition-all hover:scale-[1.02]"
+                >
+                  <Navigation className="w-4 h-4 text-orange-600" />
+                  <span>Open Live Campus Map</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+
+                <Link
+                  to={isAuthenticated ? '/dashboard' : '/register'}
+                  className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 backdrop-blur-md transition-all"
+                >
+                  <span>{isAuthenticated ? 'Go to Portal' : 'Create Student Account'}</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Right Column: Live Campus Command HUD */}
+            <div className="hidden lg:block lg:col-span-5">
+              <div className="rounded-3xl bg-[#0a1326]/80 backdrop-blur-xl border border-white/15 p-5 shadow-2xl space-y-3">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-white">
+                      Live Campus Pulse
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-mono text-emerald-300 bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-400/25">
+                    Real-Time
+                  </span>
+                </div>
+
+                {/* Live E-Rickshaw Card */}
+                <Link
+                  to="/map"
+                  className="flex items-center justify-between p-3.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-400/35 flex items-center justify-center text-orange-300">
+                      <Truck className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-white group-hover:text-orange-300 transition-colors">
+                        E-Rickshaws &amp; Shuttles
+                      </div>
+                      <div className="text-[11px] text-slate-300 flex items-center gap-1.5">
+                        <Clock className="w-3 h-3 text-orange-300" />
+                        <span>2 Campus Lines • Live GPS Stops</span>
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 group-hover:text-white transition-all" />
+                </Link>
+
+                {/* Venue Bookings Card */}
+                <Link
+                  to="/bookings"
+                  className="flex items-center justify-between p-3.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-sky-500/20 border border-sky-400/35 flex items-center justify-center text-sky-300">
+                      <Calendar className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-white group-hover:text-sky-300 transition-colors">
+                        Venue &amp; Hall Bookings
+                      </div>
+                      <div className="text-[11px] text-slate-300">
+                        Conflict-checked slot reservations
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 group-hover:text-white transition-all" />
+                </Link>
+
+                {/* Emergency SOS Card */}
+                <Link
+                  to="/map"
+                  className="flex items-center justify-between p-3.5 rounded-2xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/30 transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-rose-500/25 border border-rose-400/40 flex items-center justify-center text-rose-300">
+                      <Siren className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-white group-hover:text-rose-200 transition-colors">
+                        1-Tap Emergency SOS
+                      </div>
+                      <div className="text-[11px] text-rose-200/85">
+                        Fast-path to UniHospital &amp; Security
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-rose-300 group-hover:translate-x-0.5 transition-all" />
+                </Link>
+
+                {/* Quick Stats Row */}
+                <div className="grid grid-cols-3 gap-2.5 pt-1 text-center">
+                  <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                    <div className="font-display text-lg font-extrabold text-white">600+</div>
+                    <div className="text-[10px] text-slate-400 uppercase tracking-wider">Acres</div>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                    <div className="font-display text-lg font-extrabold text-orange-300">3</div>
+                    <div className="text-[10px] text-slate-400 uppercase tracking-wider">Map Modes</div>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                    <div className="font-display text-lg font-extrabold text-emerald-300">24/7</div>
+                    <div className="text-[10px] text-slate-400 uppercase tracking-wider">SOS Ready</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          2. MOBILITY & EMERGENCY SPOTLIGHT
+          ========================================================================= */}
+      <section id="features" className="py-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* E-Rickshaw & Shuttle Card */}
+          <div className="lg:col-span-7 rounded-3xl bg-gradient-to-br from-[#0f1e3d] via-slate-900 to-slate-950 text-white p-7 sm:p-9 border border-slate-800 shadow-xl relative overflow-hidden flex flex-col justify-between">
+            <div className="absolute inset-0 bg-dot-grid opacity-20 pointer-events-none" />
+            <div className="relative z-10 space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/20 border border-orange-400/30 text-orange-300 text-xs font-semibold">
+                <Truck className="w-3.5 h-3.5" />
+                <span>Campus Mobility</span>
+              </div>
+              <h2 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight">
+                Live E-Rickshaw Tracker &amp; Campus Roads
+              </h2>
+              <p className="text-sm text-slate-300 leading-relaxed max-w-xl">
+                View Avenue Express (Line 1) and Hostel Circuit (Line 2) following internal LPU roads, check pickup stops with ETAs, and switch between Street, Satellite &amp; Dark map modes.
+              </p>
+            </div>
+
+            <div className="relative z-10 mt-7 pt-6 border-t border-white/10 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-4 text-xs text-slate-300">
+                <span className="inline-flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  Internal Campus Roads
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  Satellite &amp; Dark Map
+                </span>
+              </div>
               <Link
-                to="/facilities"
-                className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-semibold text-sm shadow-xl transition-all hover:scale-[1.02] cursor-pointer"
+                to="/map"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-bold text-xs shadow-sm transition-all"
               >
-                <Compass className="w-4 h-4 text-violet-600" />
-                <span>Explore Campus</span>
-                <ArrowRight className="w-4 h-4" />
+                <span>Track Shuttles</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
-
-              {!isAuthenticated ? (
-                <Link
-                  to="/register"
-                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium text-sm border border-white/20 backdrop-blur-md transition-all cursor-pointer"
-                >
-                  <span>Get Started</span>
-                </Link>
-              ) : (
-                <Link
-                  to="/dashboard"
-                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium text-sm border border-white/20 backdrop-blur-md transition-all cursor-pointer"
-                >
-                  <span>Go to My Dashboard</span>
-                </Link>
-              )}
             </div>
           </div>
 
-          {/* Floating Location Markers Over The Campus Aerial Photograph */}
-          {/* Marker 1: Central Library */}
-          <div className="hidden lg:flex absolute top-[28%] right-[24%] z-20 animate-fade-in">
-            <Link
-              to="/facilities"
-              className="flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-slate-900/80 backdrop-blur-md border border-white/20 text-white shadow-2xl hover:scale-105 transition-transform"
-            >
-              <div className="w-7 h-7 rounded-xl bg-violet-600 flex items-center justify-center text-white">
-                <Building2 className="w-4 h-4" />
+          {/* Emergency SOS Card */}
+          <div className="lg:col-span-5 rounded-3xl bg-gradient-to-br from-rose-950 via-slate-900 to-slate-950 text-white p-7 sm:p-9 border border-rose-500/25 shadow-xl relative overflow-hidden flex flex-col justify-between">
+            <div className="absolute inset-0 bg-dot-grid opacity-20 pointer-events-none" />
+            <div className="relative z-10 space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/20 border border-rose-400/30 text-rose-300 text-xs font-semibold">
+                <HeartPulse className="w-3.5 h-3.5" />
+                <span>Emergency Response</span>
               </div>
-              <div className="text-left">
-                <span className="block text-xs font-bold leading-tight">Central Library</span>
-                <span className="block text-[10px] text-cyan-300 font-mono">Block 37 • Open Today</span>
-              </div>
-            </Link>
-          </div>
-
-          {/* Marker 2: Indoor Sports Complex */}
-          <div className="hidden lg:flex absolute top-[44%] right-[8%] z-20 animate-fade-in">
-            <Link
-              to="/facilities"
-              className="flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-slate-900/80 backdrop-blur-md border border-white/20 text-white shadow-2xl hover:scale-105 transition-transform"
-            >
-              <div className="w-7 h-7 rounded-xl bg-cyan-600 flex items-center justify-center text-white">
-                <MapPin className="w-4 h-4" />
-              </div>
-              <div className="text-left">
-                <span className="block text-xs font-bold leading-tight">Indoor Sports Complex</span>
-                <span className="block text-[10px] text-emerald-300 font-mono">Shanti Devi Stadium</span>
-              </div>
-            </Link>
-          </div>
-
-          {/* Marker 3: GPS Telemetry Badge */}
-          <div className="hidden xl:flex absolute bottom-8 right-10 z-20 items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950/70 backdrop-blur-md border border-white/15 text-[11px] font-mono text-slate-300">
-            <Radio className="w-3.5 h-3.5 text-violet-400 animate-pulse" />
-            <span>OpenStreetMap Calibrated • 600+ Acres Bounded</span>
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================================================
-          2. BELOW HERO: ELEGANT COMPACT STATISTICS STRIP
-          ========================================================================= */}
-      <section className="border-y border-slate-200/90 bg-slate-50/70 py-8 mb-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 text-center">
-            <div className="space-y-1">
-              <span className="block text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-                600+
-              </span>
-              <span className="text-xs sm:text-sm font-medium text-slate-600">Acres Digitized</span>
-              <span className="block text-[11px] text-slate-400 font-mono">Full university spatial footprint</span>
+              <h2 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight">
+                One-Tap SOS &amp; Fast-Path
+              </h2>
+              <p className="text-sm text-rose-100/80 leading-relaxed">
+                Instantly plot the fastest route to UniHospital (Block 30) or Security Gate 1, copy your GPS coordinates, and call campus dispatch in one tap.
+              </p>
             </div>
 
-            <div className="space-y-1">
-              <span className="block text-3xl sm:text-4xl font-extrabold text-violet-700 tracking-tight">
-                11
+            <div className="relative z-10 mt-7 pt-6 border-t border-white/10 flex items-center justify-between gap-3">
+              <span className="inline-flex items-center gap-1.5 text-xs text-rose-200 font-medium">
+                <PhoneCall className="w-4 h-4 text-rose-400" />
+                24/7 Campus Dispatch
               </span>
-              <span className="text-xs sm:text-sm font-medium text-slate-600">Verified Categories</span>
-              <span className="block text-[11px] text-slate-400 font-mono">Classified campus facility groups</span>
-            </div>
-
-            <div className="space-y-1">
-              <span className="block text-3xl sm:text-4xl font-extrabold text-cyan-700 tracking-tight">
-                100%
-              </span>
-              <span className="text-xs sm:text-sm font-medium text-slate-600">Audit Transparency</span>
-              <span className="block text-[11px] text-slate-400 font-mono">End-to-end incident report tracking</span>
-            </div>
-
-            <div className="space-y-1">
-              <span className="block text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-                3
-              </span>
-              <span className="text-xs sm:text-sm font-medium text-slate-600">Integrated Portals</span>
-              <span className="block text-[11px] text-slate-400 font-mono">Student, Faculty, & Admin hubs</span>
+              <Link
+                to="/map"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-lg shadow-rose-600/30 transition-all"
+              >
+                <span>Open SOS Map</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
       {/* =========================================================================
-          3. CAMPUS EXPLORATION & FACILITY DIRECTORY SHOWCASE
+          3. INTERACTIVE CAMPUS FACILITY DIRECTORY PREVIEW
           ========================================================================= */}
-      <section id="directory" className="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="directory" className="py-14 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-          <div className="space-y-3 max-w-xl">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-50 border border-cyan-200 text-cyan-800 text-xs font-semibold">
-              <Building2 className="w-3.5 h-3.5 text-cyan-600" />
-              <span>Campus Taxonomy Ledger</span>
+          <div className="space-y-2.5 max-w-xl">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 dark:bg-orange-950/50 border border-orange-200 dark:border-orange-800/60 text-orange-700 dark:text-orange-300 text-xs font-semibold">
+              <Building2 className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />
+              <span>Campus Directory</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-              Instant Discovery Across Campus
+            <h2 className="font-display text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              Discover Every Block &amp; Service
             </h2>
-            <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
-              Every lecture hall, food plaza, sports facility, and administrative wing cataloged with precise door coordinates, current operating hours, and floor numbers.
+            <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base leading-relaxed">
+              Verified coordinates, operating hours, and 3-tap walking directions across LPU.
             </p>
           </div>
 
-          {/* Taxonomy Filter Pills */}
           <div className="flex flex-wrap items-center gap-2">
             {[
-              { key: 'ALL', label: 'All Facilities' },
-              { key: 'ACADEMIC', label: 'Academic & Labs' },
-              { key: 'SPORTS', label: 'Sports & Fitness' },
-              { key: 'COMMERCIAL', label: 'Food & Commercial' },
-              { key: 'SERVICES', label: 'Auditoriums & Services' },
+              { key: 'ALL', label: 'All' },
+              { key: 'ACADEMIC', label: 'Academic' },
+              { key: 'SPORTS', label: 'Sports' },
+              { key: 'COMMERCIAL', label: 'Dining & Mall' },
+              { key: 'SERVICES', label: 'Health & Events' },
             ].map((tab) => (
               <button
                 key={tab.key}
+                type="button"
                 onClick={() => setActiveCategoryFilter(tab.key)}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                   activeCategoryFilter === tab.key
-                    ? 'bg-violet-600 text-white shadow-md shadow-violet-600/20'
-                    : 'bg-white text-slate-700 hover:text-slate-900 border border-slate-200 hover:border-slate-300'
+                    ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-sm shadow-orange-500/20'
+                    : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700 hover:border-orange-300'
                 }`}
               >
                 {tab.label}
@@ -410,50 +498,50 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Facility Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredFacilities.map((fac) => (
             <div
               key={fac.id}
-              className="rounded-2xl bg-white border border-slate-200/90 hover:border-violet-400 p-6 transition-all duration-200 shadow-xs hover:shadow-xl hover:shadow-violet-950/5 group flex flex-col justify-between"
+              className="group rounded-3xl bg-white dark:bg-slate-900/95 border border-slate-200/80 dark:border-slate-800 hover:border-orange-300 dark:hover:border-orange-600/60 overflow-hidden transition-all duration-200 shadow-xs hover:shadow-xl hover:-translate-y-0.5 flex flex-col justify-between"
             >
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
-                    {fac.categoryLabel}
-                  </span>
-                  <span className="text-[11px] font-mono text-emerald-700 font-medium flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    {fac.status}
-                  </span>
+              <div className={`h-1.5 w-full bg-gradient-to-r ${fac.accent}`} />
+              <div className="p-6 flex-1 flex flex-col justify-between space-y-5">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                      {fac.categoryLabel}
+                    </span>
+                    <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      {fac.status}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="font-display text-lg font-bold text-slate-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                      {fac.name}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-1">
+                      <MapPin className="w-3.5 h-3.5 text-orange-500" />
+                      <span className="font-medium text-slate-600 dark:text-slate-300">{fac.block}</span>
+                      <span>•</span>
+                      <span>{fac.floor}</span>
+                    </p>
+                  </div>
+
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{fac.specs}</p>
                 </div>
 
-                <div>
-                  <h3 className="text-xl font-bold text-slate-900 group-hover:text-violet-700 transition-colors">
-                    {fac.name}
-                  </h3>
-                  <p className="text-xs text-slate-500 flex items-center gap-1.5 mt-1 font-mono">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{fac.block}</span>
-                    <span>•</span>
-                    <span>{fac.floor}</span>
-                  </p>
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+                  <span className="text-slate-500 dark:text-slate-400 font-medium">{fac.hours}</span>
+                  <Link
+                    to="/facilities"
+                    className="inline-flex items-center gap-1 text-orange-600 dark:text-orange-400 hover:text-orange-700 font-bold"
+                  >
+                    <span>Locate</span>
+                    <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                  </Link>
                 </div>
-
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  {fac.specs}
-                </p>
-              </div>
-
-              <div className="pt-6 mt-6 border-t border-slate-100 flex items-center justify-between text-xs font-mono">
-                <span className="text-slate-500">{fac.hours}</span>
-                <Link
-                  to="/facilities"
-                  className="inline-flex items-center gap-1 text-violet-600 hover:text-violet-700 font-semibold transition-colors"
-                >
-                  <span>Locate</span>
-                  <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                </Link>
               </div>
             </div>
           ))}
@@ -461,420 +549,146 @@ export default function LandingPage() {
       </section>
 
       {/* =========================================================================
-          4. ASYMMETRIC BENTO FEATURE SHOWCASE
+          4. INTERACTIVE ISSUE REPORTING LIFECYCLE
           ========================================================================= */}
-      <section id="features" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-100">
-        <div className="space-y-4 mb-16 text-center max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-50 border border-violet-200 text-violet-700 text-xs font-semibold">
-            <Zap className="w-3.5 h-3.5 text-violet-600" />
-            <span>Engineered Architecture</span>
-          </div>
-          <h2 className="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">
-            Built for Institutional Scale
-          </h2>
-          <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
-            Replacing obsolete paper maps and fragmented directories with a unified, audit-locked GIS operations suite.
-          </p>
-        </div>
-
-        {/* Bento Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Bento Card 1 (Span 2 cols): Precision GIS Engine */}
-          <div className="lg:col-span-2 rounded-3xl bg-linear-to-br from-violet-50/40 via-white to-slate-50 border border-slate-200/90 p-8 sm:p-10 flex flex-col justify-between relative overflow-hidden group shadow-xs">
-            <div className="space-y-4 max-w-xl relative z-10">
-              <div className="w-12 h-12 rounded-2xl bg-violet-100 border border-violet-200 flex items-center justify-center text-violet-700">
-                <Navigation className="w-6 h-6" />
-              </div>
-              <span className="text-xs font-mono font-bold tracking-wider uppercase text-violet-700">
-                Core Pillar 01 // Spatial Intelligence
-              </span>
-              <h3 className="text-2xl sm:text-3xl font-bold text-slate-900">
-                Precision OpenStreetMap GIS Mapping
-              </h3>
-              <p className="text-slate-600 text-sm leading-relaxed">
-                Every building coordinate is mathematically bounded to the Lovely Professional University geographic perimeter (31.24°–31.26° N, 75.69°–75.72° E). Includes interactive pan/zoom, custom vector pin markers, and real-time route path rendering.
-              </p>
-            </div>
-
-            <div className="mt-8 pt-6 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono text-xs text-slate-600 relative z-10">
-              <div>
-                <span className="block text-slate-400 text-[10px] uppercase">Calibration</span>
-                <span className="text-slate-900 font-semibold">0.5m GPS Accuracy</span>
-              </div>
-              <div>
-                <span className="block text-slate-400 text-[10px] uppercase">Bounding Engine</span>
-                <span className="text-slate-900 font-semibold">LPU Geographic Clamp</span>
-              </div>
-              <div>
-                <span className="block text-slate-400 text-[10px] uppercase">Library</span>
-                <span className="text-slate-900 font-semibold">Leaflet + GeoJSON</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Bento Card 2 (Span 1 col): Hierarchical Taxonomies */}
-          <div className="rounded-3xl bg-white border border-slate-200/90 p-8 flex flex-col justify-between relative overflow-hidden group shadow-xs">
-            <div className="space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-cyan-50 border border-cyan-200 flex items-center justify-center text-cyan-700">
-                <Layers className="w-6 h-6" />
-              </div>
-              <span className="text-xs font-mono font-bold tracking-wider uppercase text-cyan-800">
-                Core Pillar 02 // Categorization
-              </span>
-              <h3 className="text-2xl font-bold text-slate-900">
-                11 Verified Facility Taxonomies
-              </h3>
-              <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
-                From high-security academic laboratories to dining plazas, sports grounds, and ATM kiosks. Managed with relational category deletion protection to safeguard active campus facilities.
-              </p>
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-slate-100 space-y-2 text-xs">
-              {['Academic Blocks & Research', 'Athletics & Stadia', 'Healthcare & Dining'].map(
-                (item, i) => (
-                  <div key={i} className="flex items-center gap-2 text-slate-600">
-                    <Check className="w-3.5 h-3.5 text-cyan-600" />
-                    <span>{item}</span>
-                  </div>
-                )
-              )}
-            </div>
-          </div>
-
-          {/* Bento Card 3 (Span 1 col): Role-Based Cryptographic Access */}
-          <div className="rounded-3xl bg-white border border-slate-200/90 p-8 flex flex-col justify-between relative overflow-hidden group shadow-xs">
-            <div className="space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
-                <ShieldCheck className="w-6 h-6" />
-              </div>
-              <span className="text-xs font-mono font-bold tracking-wider uppercase text-emerald-800">
-                Core Pillar 03 // Authorization
-              </span>
-              <h3 className="text-2xl font-bold text-slate-900">
-                Tri-Role Institutional Security
-              </h3>
-              <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
-                Cryptographically separated portals for Students, Faculty, and University Administrators powered by JWT token rotation, blacklisting, and server-side RBAC validation.
-              </p>
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-slate-100 space-y-2 text-xs font-mono">
-              <div className="flex items-center justify-between text-slate-600">
-                <span>Student Portal</span>
-                <span className="text-emerald-700 font-semibold">Browse & Report</span>
-              </div>
-              <div className="flex items-center justify-between text-slate-600">
-                <span>Faculty Console</span>
-                <span className="text-sky-700 font-semibold">Triage & Resolve</span>
-              </div>
-              <div className="flex items-center justify-between text-slate-600">
-                <span>Admin Authority</span>
-                <span className="text-violet-700 font-semibold">Full CRUD Governance</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Bento Card 4 (Span 2 cols): Incident Governance State Machine */}
-          <div className="lg:col-span-2 rounded-3xl bg-linear-to-br from-cyan-50/40 via-white to-slate-50 border border-slate-200/90 p-8 sm:p-10 flex flex-col justify-between relative overflow-hidden group shadow-xs">
-            <div className="space-y-4 max-w-xl relative z-10">
-              <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700">
-                <AlertTriangle className="w-6 h-6" />
-              </div>
-              <span className="text-xs font-mono font-bold tracking-wider uppercase text-amber-800">
-                Core Pillar 04 // Maintenance Ops
-              </span>
-              <h3 className="text-2xl sm:text-3xl font-bold text-slate-900">
-                Audit-Locked Issue Reporting State Machine
-              </h3>
-              <p className="text-slate-600 text-sm leading-relaxed">
-                Encounter broken equipment or closed facilities? Students submit geolocated tickets in seconds. Staff and administrators manage lifecycle transitions with an immutable audit log, resolution notes, and status verification.
-              </p>
-            </div>
-
-            <div className="mt-8 pt-6 border-t border-slate-200 flex flex-wrap items-center gap-3 text-xs font-mono relative z-10">
-              <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 font-semibold">
-                PENDING ➔ IN PROGRESS ➔ RESOLVED
-              </span>
-              <span className="text-slate-300">•</span>
-              <span className="text-slate-700">Automatic Timestamp Verification</span>
-              <span className="text-slate-300">•</span>
-              <span className="text-emerald-700 font-medium">Strict Non-Admin Edit Protection</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================================================
-          5. ISSUE REPORTING & LIFECYCLE TRACKING SHOWCASE
-          ========================================================================= */}
-      <section className="py-20 bg-slate-50/80 border-t border-slate-200">
+      <section className="py-16 bg-white/70 dark:bg-slate-900/50 border-y border-slate-200/80 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto text-center space-y-4 mb-14">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">
-              <FileCheck className="w-3.5 h-3.5 text-amber-600" />
+          <div className="max-w-2xl mx-auto text-center space-y-3 mb-12">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-semibold">
+              <FileCheck className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
               <span>Transparent Maintenance Pipeline</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-              From Broken Elevator to Verified Resolution
+            <h2 className="font-display text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              Track Every Report From Filing to Fix
             </h2>
-            <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
-              Click through the lifecycle stages below to see how campus defect reports are captured, triaged, and transparently verified by university staff.
+            <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">
+              Click each stage below to preview how student reports move through faculty &amp; admin resolution.
             </p>
           </div>
 
-          {/* Interactive Step Simulator */}
-          <div className="max-w-4xl mx-auto bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xl shadow-slate-900/5">
-            {/* Step Navigation Buttons */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-4 p-1.5 bg-slate-100 rounded-2xl border border-slate-200 mb-8">
+          <div className="max-w-4xl mx-auto bg-slate-50/90 dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-8 shadow-lg">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 p-1.5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 mb-6">
               {reportStages.map((stage) => (
                 <button
                   key={stage.step}
+                  type="button"
                   onClick={() => setActiveReportStep(stage.step)}
-                  className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer text-center ${
+                  className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
                     activeReportStep === stage.step
-                      ? 'bg-violet-600 text-white shadow-md shadow-violet-600/25'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-md shadow-orange-500/20'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700'
                   }`}
                 >
-                  <span className="hidden sm:inline">Stage 0{stage.step + 1}: </span>
+                  <span className="hidden sm:inline">0{stage.step + 1}. </span>
                   <span>{stage.badge}</span>
                 </button>
               ))}
             </div>
 
-            {/* Simulated Live Ticket Card */}
-            <div className="rounded-2xl bg-slate-50/90 border border-slate-200 p-6 sm:p-8 space-y-6">
-              <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200">
+            <div className="rounded-2xl bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 p-6 space-y-5 shadow-xs">
+              <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
                 <div className="space-y-1">
-                  <span className="text-xs font-mono text-slate-500">
-                    TICKET #CPX-2026-0842 // BLOCK 37
+                  <span className="text-[11px] font-mono text-slate-400">
+                    TICKET #CPX-2026-0842 • BLOCK 37
                   </span>
-                  <h3 className="text-xl font-bold text-slate-900">
+                  <h3 className="font-display text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
                     Elevator 2 Sensor Fault — Central Library
                   </h3>
                 </div>
 
                 <span
-                  className={`px-3 py-1 rounded-full text-xs font-mono font-bold border ${reportStages[activeReportStep].badgeClass}`}
+                  className={`px-3 py-1 rounded-full text-xs font-bold border ${reportStages[activeReportStep].badgeClass}`}
                 >
-                  STATUS: {reportStages[activeReportStep].badge}
+                  {reportStages[activeReportStep].badge}
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
-                <div className="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
-                  <span className="text-slate-500 block">Logged Time & Audit Anchor</span>
-                  <span className="text-slate-900 font-semibold">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800 space-y-1">
+                  <span className="text-slate-500 dark:text-slate-400 block">Timestamp</span>
+                  <span className="text-slate-900 dark:text-white font-semibold">
                     {reportStages[activeReportStep].timestamp}
                   </span>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
-                  <span className="text-slate-500 block">Current Action Authority</span>
-                  <span className="text-violet-700 font-semibold">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800 space-y-1">
+                  <span className="text-slate-500 dark:text-slate-400 block">Handled By</span>
+                  <span className="text-orange-600 dark:text-orange-400 font-semibold">
                     {reportStages[activeReportStep].actor}
                   </span>
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-2 shadow-2xs">
-                <span className="text-[11px] font-mono text-slate-500 uppercase tracking-wider block">
-                  Operational Log Update
-                </span>
-                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-sans">
-                  {reportStages[activeReportStep].desc}
-                </p>
-              </div>
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200/70 dark:border-slate-800">
+                {reportStages[activeReportStep].desc}
+              </p>
             </div>
           </div>
         </div>
       </section>
 
       {/* =========================================================================
-          6. HOW CAMPUSXPLORE WORKS — THE VISUAL JOURNEY
+          5. ROLE PORTALS & SECURITY SUMMARY
           ========================================================================= */}
-      <section id="how-it-works" className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center space-y-4 max-w-2xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-50 border border-cyan-200 text-cyan-800 text-xs font-semibold">
-            <Compass className="w-3.5 h-3.5 text-cyan-600" />
-            <span>User Journey</span>
-          </div>
-          <h2 className="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">
-            Three Steps to Frictionless Campus Mobility
-          </h2>
-          <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
-            Designed for incoming freshmen, 30,000+ enrolled students, faculty researchers, and campus operations teams.
-          </p>
-        </div>
-
-        {/* 3-Step Journey Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-          {/* Step 1 */}
-          <div className="rounded-3xl bg-white border border-slate-200 p-8 space-y-6 relative hover:border-violet-300 shadow-sm hover:shadow-lg transition-all">
-            <div className="w-12 h-12 rounded-2xl bg-violet-100 border border-violet-200 flex items-center justify-center text-violet-700 font-mono font-bold text-lg">
-              01
+      <section id="about" className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-6 shadow-xs space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-950/50 text-orange-600 dark:text-orange-400 flex items-center justify-center">
+              <Compass className="w-5 h-5" />
             </div>
-            <div className="space-y-2">
-              <h3 className="text-xl font-bold text-slate-900">Search & Filter</h3>
-              <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
-                Enter any building block (e.g., Block 37, Block 38), department name, ATM kiosk, or food plaza. Instant keyword matching filters through all 11 taxonomy groups.
-              </p>
-            </div>
-            <div className="pt-2 text-xs font-mono text-violet-700 font-semibold flex items-center gap-1">
-              <span>Instant Auto-Complete</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </div>
-          </div>
-
-          {/* Step 2 */}
-          <div className="rounded-3xl bg-white border border-slate-200 p-8 space-y-6 relative hover:border-violet-300 shadow-sm hover:shadow-lg transition-all">
-            <div className="w-12 h-12 rounded-2xl bg-cyan-50 border border-cyan-200 flex items-center justify-center text-cyan-700 font-mono font-bold text-lg">
-              02
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-xl font-bold text-slate-900">Locate & Inspect</h3>
-              <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
-                Pinpoint exact building entrances on high-resolution OpenStreetMap tiles. Confirm live opening schedules, floor directories, and department emergency extensions before heading out.
-              </p>
-            </div>
-            <div className="pt-2 text-xs font-mono text-cyan-700 font-semibold flex items-center gap-1">
-              <span>Sub-Meter GPS Bounds</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </div>
-          </div>
-
-          {/* Step 3 */}
-          <div className="rounded-3xl bg-white border border-slate-200 p-8 space-y-6 relative hover:border-violet-300 shadow-sm hover:shadow-lg transition-all">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 font-mono font-bold text-lg">
-              03
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-xl font-bold text-slate-900">Report & Resolve</h3>
-              <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
-                Encounter equipment failures or facility issues? Snap a photo, file a ticket in under 30 seconds, and receive transparent updates as university maintenance resolves it.
-              </p>
-            </div>
-            <div className="pt-2 text-xs font-mono text-emerald-700 font-semibold flex items-center gap-1">
-              <span>Guaranteed Audit Trail</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================================================
-          7. INSTITUTIONAL STORY & TECHNICAL STACK SPEC
-          ========================================================================= */}
-      <section id="about" className="py-20 border-t border-slate-200 bg-slate-50/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-            {/* Institutional Story */}
-            <div className="lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-50 border border-violet-200 text-violet-700 text-xs font-semibold">
-                <Sparkles className="w-3.5 h-3.5 text-violet-600" />
-                <span>Capstone Engineering Initiative</span>
-              </div>
-
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-                Engineered for Lovely Professional University
-              </h2>
-
-              <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-                With a university footprint spanning more than 600 acres in Phagwara, Punjab, accommodating over 30,000 students and 5,000 faculty, finding lecture halls and navigating facilities presents daily spatial friction.
-              </p>
-
-              <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-                CampusXplore was engineered as a final-year B.Tech capstone project to demonstrate how modern web GIS architecture (Django REST Framework, PostgreSQL, and React) can replace legacy static campus maps with an interactive, verified spatial platform with cryptographic security and role accountability.
-              </p>
-
-              <div className="flex flex-wrap gap-6 pt-2 font-mono text-xs text-slate-600">
-                <div>
-                  <span className="block text-2xl font-bold text-slate-900 font-sans">600+</span>
-                  <span className="text-slate-400">Acres Bounded</span>
-                </div>
-                <div>
-                  <span className="block text-2xl font-bold text-violet-700 font-sans">11</span>
-                  <span className="text-slate-400">Facility Taxonomies</span>
-                </div>
-                <div>
-                  <span className="block text-2xl font-bold text-cyan-700 font-sans">100%</span>
-                  <span className="text-slate-400">Audit Transparency</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Technical Stack Architecture Card */}
-            <div className="lg:col-span-5 rounded-3xl bg-white border border-slate-200 p-7 shadow-xl shadow-slate-900/5 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-violet-700 flex items-center gap-1.5">
-                  <Cpu className="w-4 h-4 text-violet-600" />
-                  <span>Technical Architecture</span>
-                </span>
-                <span className="text-[11px] font-mono text-emerald-700 font-semibold">Production Ready</span>
-              </div>
-
-              <div className="space-y-3 text-xs">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                  <span className="text-slate-500">Backend API Framework</span>
-                  <span className="font-semibold text-slate-800">Django 5.2 + DRF</span>
-                </div>
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                  <span className="text-slate-500">Relational Database</span>
-                  <span className="font-semibold text-slate-800">PostgreSQL 18</span>
-                </div>
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                  <span className="text-slate-500">Frontend Client</span>
-                  <span className="font-semibold text-slate-800">React 19 + Vite + Tailwind</span>
-                </div>
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                  <span className="text-slate-500">GIS & Cartography Engine</span>
-                  <span className="font-semibold text-slate-800">Leaflet + OpenStreetMap</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Authentication Protocol</span>
-                  <span className="font-semibold text-slate-800">JWT Token Rotation & RBAC</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================================================
-          8. CLOSING CALL TO ACTION
-          ========================================================================= */}
-      <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="rounded-3xl bg-slate-900 text-white border border-slate-800 p-10 sm:p-16 text-center relative overflow-hidden shadow-2xl">
-          {/* Ambient Radial Spotlight */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.35),transparent_70%)] pointer-events-none" />
-
-          <div className="relative z-10 max-w-2xl mx-auto space-y-6">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-violet-300 text-xs font-semibold">
-              <Compass className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Ready to Explore?</span>
-            </div>
-
-            <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight">
-              Step Onto Campus with Complete Confidence
-            </h2>
-
-            <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-              Join students and faculty across Lovely Professional University in discovering facilities, locating lecture halls, and tracking campus maintenance in real time.
+            <h3 className="font-display text-lg font-bold text-slate-900 dark:text-white">Student Portal</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Navigate 600+ acres, track live e-rickshaws, book venues, trigger Emergency SOS, and submit issue reports with photos.
             </p>
+          </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+          <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-6 shadow-xs space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 flex items-center justify-center">
+              <Layers className="w-5 h-5" />
+            </div>
+            <h3 className="font-display text-lg font-bold text-slate-900 dark:text-white">Faculty Workspace</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Inspect campus-wide maintenance tickets, approve hall bookings, and update resolution statuses in real time.
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-6 shadow-xs space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <h3 className="font-display text-lg font-bold text-slate-900 dark:text-white">Admin Command Center</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Full governance over facilities, categories, transit routes/stops/vehicles, CSV exports, and JWT-secured RBAC access.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          6. CLOSING CALL TO ACTION
+          ========================================================================= */}
+      <section className="pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="rounded-3xl bg-gradient-to-br from-[#0f1e3d] via-slate-900 to-slate-950 text-white border border-slate-800 p-10 sm:p-14 text-center relative overflow-hidden shadow-2xl">
+          <div className="absolute inset-0 bg-dot-grid opacity-25 pointer-events-none" />
+          <div className="relative z-10 max-w-2xl mx-auto space-y-5">
+            <h2 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight">
+              Ready to Explore LPU Smarter?
+            </h2>
+            <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+              Sign in to access personalized portals, live e-rickshaw tracking, venue bookings, and real-time campus reporting.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <Link
                 to={isAuthenticated ? '/dashboard' : '/login'}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl bg-linear-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold text-sm shadow-xl shadow-violet-600/30 transition-all hover:scale-[1.02] cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-bold text-sm shadow-xl shadow-orange-500/25 transition-all hover:scale-[1.02]"
               >
-                <span>{isAuthenticated ? 'Open My Dashboard' : 'Sign In to Portal'}</span>
+                <span>{isAuthenticated ? 'Open My Portal' : 'Sign In to Portal'}</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
-
               {!isAuthenticated && (
                 <Link
                   to="/register"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-sm border border-slate-700 transition-colors"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 backdrop-blur-md transition-colors"
                 >
                   <span>Create Student Account</span>
                 </Link>

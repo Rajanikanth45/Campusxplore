@@ -175,18 +175,39 @@ function createRickshawIcon(name) {
   });
 }
 
+const MAP_STYLES = {
+  street: {
+    label: 'Street',
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
+    darkFilter: false,
+  },
+  satellite: {
+    label: 'Satellite',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics',
+    darkFilter: false,
+  },
+  dark: {
+    label: 'Dark',
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
+    darkFilter: true,
+  },
+};
+
 export default function CampusMap({
   facilities = [],
   selectedFacilityId = null,
+  autoDirections = false,
   onMarkerSelect = null,
   height = '100%',
   initialCenter = DEFAULT_LPU_CENTER,
   initialZoom = 16,
   isMiniMap = false,
-  tileUrl = import.meta.env.VITE_MAP_TILE_URL || 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-  attribution = import.meta.env.VITE_MAP_TILE_ATTRIBUTION || '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
 }) {
   const [tileError, setTileError] = useState(false);
+  const [mapStyle, setMapStyle] = useState('street');
   const [locating, setLocating] = useState(false);
   const [routeLoading, setRouteLoading] = useState(false);
   const [locationError, setLocationError] = useState(null);
@@ -194,9 +215,11 @@ export default function CampusMap({
   const [selectedDestinationId, setSelectedDestinationId] = useState('');
   const [showShuttles, setShowShuttles] = useState(false);
   const [isSosOpen, setIsSosOpen] = useState(false);
+  const [userCoords, setUserCoords] = useState(null);
 
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
+  const tileLayerRef = useRef(null);
   const markersLayerRef = useRef(null);
   const markerMapRef = useRef(new Map());
   const userLocationLayerRef = useRef(null);
@@ -337,6 +360,7 @@ export default function CampusMap({
           const { latitude, longitude, accuracy } = position.coords;
           const coords = { lat: latitude, lng: longitude, accuracy };
           userCoordsRef.current = coords;
+          setUserCoords(coords);
 
           const map = mapInstanceRef.current;
           if (map) {
@@ -395,6 +419,7 @@ export default function CampusMap({
         const { latitude, longitude, accuracy } = position.coords;
         const coords = { lat: latitude, lng: longitude, accuracy };
         userCoordsRef.current = coords;
+        setUserCoords(coords);
         const map = mapInstanceRef.current;
         if (!map) { setLocating(false); return; }
 
@@ -473,18 +498,28 @@ export default function CampusMap({
       attributionControl: true,
     });
 
-    // Configurable Tile Layer with OpenStreetMap default
-    const tileLayer = L.tileLayer(tileUrl, {
-      attribution,
+    const initialStyle = MAP_STYLES.street;
+    const tileLayer = L.tileLayer(initialStyle.url, {
+      attribution: initialStyle.attribution,
       maxZoom: 19,
       crossOrigin: true,
     }).addTo(map);
+    tileLayerRef.current = tileLayer;
 
+    let consecutiveTileErrors = 0;
     const handleTileError = () => {
-      setTileError(true);
+      consecutiveTileErrors += 1;
+      if (consecutiveTileErrors >= 4) {
+        setTileError(true);
+      }
+    };
+    const handleTileLoad = () => {
+      consecutiveTileErrors = 0;
+      setTileError(false);
     };
 
     tileLayer.on('tileerror', handleTileError);
+    tileLayer.on('tileload', handleTileLoad);
 
     // Marker Layer Group
     const markersLayer = L.layerGroup().addTo(map);
@@ -501,6 +536,7 @@ export default function CampusMap({
     return () => {
       clearTimeout(resizeTimer);
       tileLayer.off('tileerror', handleTileError);
+      tileLayer.off('tileload', handleTileLoad);
       if (shuttleLayerRef.current) {
         shuttleLayerRef.current.remove();
         shuttleLayerRef.current = null;
@@ -512,11 +548,28 @@ export default function CampusMap({
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
+        tileLayerRef.current = null;
         markersLayerRef.current = null;
         markerMap.clear();
       }
     };
-  }, [tileUrl, attribution, centerLat, centerLng, initialZoom, isMiniMap]);
+  }, [centerLat, centerLng, initialZoom, isMiniMap]);
+
+  // Swap tile layer cleanly when user switches between Street / Satellite / Dark
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    const layer = tileLayerRef.current;
+    const next = MAP_STYLES[mapStyle] || MAP_STYLES.street;
+    if (map && layer) {
+      layer.setUrl(next.url);
+      const tilePane = map.getPane('tilePane');
+      if (tilePane) {
+        tilePane.style.filter = next.darkFilter
+          ? 'invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)'
+          : '';
+      }
+    }
+  }, [mapStyle]);
 
   // Shuttle & E-Rickshaw Layer Effect (Loads from database API with fallback)
   useEffect(() => {
@@ -586,15 +639,24 @@ export default function CampusMap({
           stopCoords = [DEFAULT_LPU_CENTER];
         }
 
-        // Render base polyline connecting all stops
-        const glow = L.polyline(stopCoords, {
+        let routeLineCoords = [];
+        if (route.waypoints && route.waypoints.length >= 2) {
+          routeLineCoords = route.waypoints;
+        } else if (stopCoords.length >= 2) {
+          routeLineCoords = stopCoords;
+        } else {
+          routeLineCoords = [DEFAULT_LPU_CENTER];
+        }
+
+        // Render base polyline strictly along internal campus route (no external highway detours)
+        const glow = L.polyline(routeLineCoords, {
           color: '#ffffff',
           weight: 7,
-          opacity: 0.85,
+          opacity: 0.9,
         });
 
-        const line = L.polyline(stopCoords, {
-          color: route.color || '#f59e0b',
+        const line = L.polyline(routeLineCoords, {
+          color: route.color || '#f97316',
           weight: 4.5,
           dashArray: '8, 8',
           opacity: 0.95,
@@ -603,16 +665,16 @@ export default function CampusMap({
         const popupHtml = `
           <div class="p-3 font-sans max-w-[260px] text-slate-800">
             <div class="flex items-center gap-2">
-              <span style="background-color: ${route.color || '#f59e0b'};" class="w-3 h-3 rounded-full inline-block"></span>
-              <span class="font-extrabold text-xs uppercase tracking-wider" style="color: ${route.secondary_color || route.color || '#f59e0b'}">
-                ${route.name}
+              <span style="background-color: ${escHtml(route.color || '#f97316')};" class="w-3 h-3 rounded-full inline-block"></span>
+              <span class="font-extrabold text-xs uppercase tracking-wider" style="color: ${escHtml(route.secondary_color || route.color || '#ea580c')}">
+                ${escHtml(route.name)}
               </span>
             </div>
-            <p class="text-xs font-semibold text-slate-900 mt-1.5 leading-snug">${route.description || ''}</p>
+            <p class="text-xs font-semibold text-slate-900 mt-1.5 leading-snug">${escHtml(route.description || '')}</p>
             <div class="mt-2.5 pt-2 border-t border-slate-100 text-[11px] space-y-1 text-slate-600">
-              <div>⏱️ Frequency: <strong class="text-slate-900">${route.frequency}</strong></div>
-              <div>🕒 Operating Hours: <strong class="text-slate-900">${route.operating_hours || route.operatingHours}</strong></div>
-              <div>🎫 Fare: <strong class="text-slate-900">${route.fare}</strong></div>
+              <div>⏱️ Frequency: <strong class="text-slate-900">${escHtml(route.frequency)}</strong></div>
+              <div>🕒 Operating Hours: <strong class="text-slate-900">${escHtml(route.operating_hours || route.operatingHours)}</strong></div>
+              <div>🎫 Fare: <strong class="text-slate-900">${escHtml(route.fare)}</strong></div>
               <div>🚏 Connected Stops: <strong class="text-slate-900">${routeStops.length} stops</strong></div>
             </div>
           </div>
@@ -621,40 +683,13 @@ export default function CampusMap({
 
         group.addLayer(glow);
         group.addLayer(line);
-        routePathsMap.set(route.id, stopCoords);
-
-        // Background road snapping via OSRM to curve along campus streets smoothly
-        if (stopCoords.length >= 2) {
-          (async () => {
-            try {
-              const coordsParam = stopCoords.map(([lat, lng]) => `${lng},${lat}`).join(';');
-              const ctrl = new AbortController();
-              const tid = setTimeout(() => ctrl.abort(), 2500);
-              const osrmRes = await fetch(
-                `https://router.project-osrm.org/route/v1/driving/${coordsParam}?overview=full&geometries=geojson`,
-                { signal: ctrl.signal }
-              );
-              clearTimeout(tid);
-              if (osrmRes.ok) {
-                const osrmData = await osrmRes.json();
-                if (osrmData.routes && osrmData.routes[0]?.geometry?.coordinates?.length > 0) {
-                  const snapped = osrmData.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-                  if (isMounted) {
-                    glow.setLatLngs(snapped);
-                    line.setLatLngs(snapped);
-                    routePathsMap.set(route.id, snapped);
-                  }
-                }
-              }
-            } catch {
-              // Graceful fallback to direct stop-to-stop line
-            }
-          })();
-        }
+        routePathsMap.set(route.id, routeLineCoords);
       }
 
-      // 2. Add Shuttle Stops
-      activeStops.forEach((stop) => {
+      // 2. Add Active Shuttle Stops (sorted by order)
+      activeStops
+        .filter((s) => s.is_active !== false)
+        .forEach((stop) => {
         const stopLat = parseFloat(stop.latitude);
         const stopLng = parseFloat(stop.longitude);
         if (!isValidCoordinate(stopLat, stopLng)) return;
@@ -738,16 +773,23 @@ export default function CampusMap({
           });
           const vPopup = `
             <div class="p-2.5 font-sans text-xs text-slate-800">
-              <div class="font-bold text-sm text-slate-900">${veh.vehicle_number}</div>
-              <div class="text-slate-500 mt-0.5">Driver: <strong>${veh.driver_name}</strong></div>
-              <div class="text-slate-500">Route: <strong>${veh.route_name || 'Assigned Line'}</strong></div>
-              <div class="text-slate-500">Speed: <strong>${veh.speed_kmh} km/h</strong></div>
+              <div class="font-bold text-sm text-slate-900">${escHtml(veh.vehicle_number)}</div>
+              <div class="text-slate-500 mt-0.5">Driver: <strong>${escHtml(veh.driver_name)}</strong></div>
+              <div class="text-slate-500">Route: <strong>${escHtml(veh.route_name || 'Assigned Line')}</strong></div>
+              <div class="text-slate-500">Speed: <strong>${escHtml(veh.speed_kmh)} km/h</strong></div>
               <div class="text-[10px] text-emerald-700 font-bold mt-1">● Live GPS Tracked</div>
             </div>
           `;
           marker.bindPopup(vPopup);
           group.addLayer(marker);
-          vehicleMarkers.push({ marker, vehId: veh.id, baseLat: vLat, baseLng: vLng, routePath: rPath });
+          vehicleMarkers.push({
+            marker,
+            vehId: veh.id,
+            routeId: veh.route || veh.route_id,
+            baseLat: vLat,
+            baseLng: vLng,
+            routePath: rPath,
+          });
         });
       } else {
         // Fallback default 3 demo rickshaws
@@ -790,13 +832,25 @@ export default function CampusMap({
           }
         }
 
-        // Smooth subtle vehicle movement around their current GPS track
+        // Move each e-rickshaw strictly along its assigned e-rickshaw route polyline (ping-pong 0 -> 1 -> 0)
         vehicleMarkers.forEach((vm, idx) => {
-          const deltaLat = Math.sin((progress * Math.PI * 2) + idx) * 0.0004;
-          const deltaLng = Math.cos((progress * Math.PI * 2) + idx) * 0.0004;
-          vm.marker.setLatLng([vm.baseLat + deltaLat, vm.baseLng + deltaLng]);
+          const path = (vm.routeId && routePathsMap.get(vm.routeId)) || vm.routePath;
+          if (!path || path.length < 2) {
+            vm.marker.setLatLng([vm.baseLat, vm.baseLng]);
+            return;
+          }
+          const phase = ((progress + idx / Math.max(vehicleMarkers.length, 1)) % 1);
+          // Ping-pong smoothly from start to end and back along the exact route
+          const t = phase <= 0.5 ? phase * 2 : (1 - phase) * 2;
+          const exactIdx = t * (path.length - 1);
+          const i0 = Math.floor(exactIdx);
+          const i1 = Math.min(i0 + 1, path.length - 1);
+          const frac = exactIdx - i0;
+          const lat = path[i0][0] + (path[i1][0] - path[i0][0]) * frac;
+          const lng = path[i0][1] + (path[i1][1] - path[i0][1]) * frac;
+          vm.marker.setLatLng([lat, lng]);
         });
-      }, 2000);
+      }, 1500);
     };
 
     initTransitLayer();
@@ -953,9 +1007,14 @@ export default function CampusMap({
     // Auto-center or fit bounds
     if (selectedFacilityId && markerMapRef.current.has(String(selectedFacilityId))) {
       const selectedMarker = markerMapRef.current.get(String(selectedFacilityId));
+      const targetFac = facilities.find((f) => String(f.id) === String(selectedFacilityId));
       const targetLatLng = selectedMarker.getLatLng();
       map.setView(targetLatLng, Math.max(map.getZoom(), 17), { animate: true });
-      selectedMarker.openPopup();
+      if (autoDirections && targetFac && !isMiniMap) {
+        handleGetDirections(targetFac);
+      } else {
+        selectedMarker.openPopup();
+      }
     } else if (isMiniMap && validFacilities.length === 1) {
       const f = validFacilities[0];
       map.setView([parseFloat(f.latitude), parseFloat(f.longitude)], 17);
@@ -963,20 +1022,20 @@ export default function CampusMap({
       // Fit bounds to display all filtered markers smoothly
       map.fitBounds(latLngBounds, { padding: [50, 50], maxZoom: 17 });
     }
-  }, [facilities, selectedFacilityId, isMiniMap, onMarkerSelect, navigate, handleGetDirections]);
+  }, [facilities, selectedFacilityId, autoDirections, isMiniMap, onMarkerSelect, navigate, handleGetDirections]);
 
   return (
     <div className="relative w-full overflow-hidden rounded-xl border border-slate-200 shadow-sm" style={{ height }}>
       {tileError && (
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[1000] px-3 py-1.5 rounded-lg bg-amber-500/95 text-white text-xs font-medium shadow-md flex items-center gap-1.5 pointer-events-none">
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[1000] px-3 py-1.5 rounded-lg bg-amber-500/95 text-white text-xs font-medium shadow-md flex items-center gap-1.5 pointer-events-none">
           <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-          <span>Map tiles could not be loaded. Please check your network connection.</span>
+          <span>Some map tiles failed to load. Check your network connection.</span>
         </div>
       )}
 
-      {/* Top Map Action Bar */}
+      {/* Top Map Action Bar (offset left-14 so Leaflet zoom +/- controls remain unobstructed) */}
       {!isMiniMap && (
-        <div className="absolute top-3 left-3 right-3 z-[1000] flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+        <div className="absolute top-3 left-14 right-3 z-[1000] flex flex-wrap items-center justify-between gap-2 pointer-events-none">
           {/* Quick Navigate Destination Selector */}
           <div className="flex items-center gap-2 w-full sm:w-auto max-w-xs sm:max-w-sm pointer-events-auto">
             <div className="w-full bg-white/95 backdrop-blur-md rounded-xl shadow-md border border-slate-200/90 px-3 py-2 flex items-center gap-2">
@@ -1121,14 +1180,32 @@ export default function CampusMap({
         </div>
       )}
 
-      {/* Locate Me Button */}
+      {/* Map Style Switcher & Locate Me Button */}
       {!isMiniMap && (
         <div className="absolute bottom-6 right-3 z-[1000] flex flex-col items-end gap-2">
+          <div className="inline-flex items-center bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-1 rounded-xl shadow-lg border border-slate-200/80 dark:border-slate-700">
+            {Object.entries(MAP_STYLES).map(([key, cfg]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setMapStyle(key)}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                  mapStyle === key
+                    ? 'bg-[#0f1e3d] text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                {cfg.label}
+              </button>
+            ))}
+          </div>
+
           <button
+            type="button"
             onClick={handleLocateMe}
             disabled={locating}
             title="Show my location"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-200 shadow-md text-xs font-semibold text-indigo-600 hover:bg-indigo-50 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-700 shadow-lg text-xs font-semibold text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed transition-all cursor-pointer min-h-[40px]"
           >
             {locating
               ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -1165,7 +1242,7 @@ export default function CampusMap({
         <EmergencySosModal
           isOpen={isSosOpen}
           onClose={() => setIsSosOpen(false)}
-          userCoords={userCoordsRef.current}
+          userCoords={userCoords}
           onFastPathTo={(dest) => handleGetDirections(dest)}
         />
       )}

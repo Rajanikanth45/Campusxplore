@@ -83,6 +83,9 @@ class ShuttleStop(models.Model):
         verbose_name = _('Shuttle Stop')
         verbose_name_plural = _('Shuttle Stops')
         ordering = ['order', 'name']
+        indexes = [
+            models.Index(fields=['route', 'is_active', 'order']),
+        ]
 
     def __str__(self):
         return f"{self.name} ({self.code})"
@@ -133,7 +136,47 @@ class ShuttleVehicle(models.Model):
         verbose_name = _('E-Rickshaw Vehicle')
         verbose_name_plural = _('E-Rickshaw Vehicles')
         ordering = ['vehicle_number']
+        indexes = [
+            models.Index(fields=['status', 'route']),
+        ]
 
     def __str__(self):
         return f"{self.vehicle_number} - {self.driver_name} ({self.status})"
+
+
+class EmergencyPost(models.Model):
+    """
+    Database-backed campus emergency post / medical center / security station for SOS fast-path.
+    """
+    CATEGORY_CHOICES = [
+        ('MEDICAL', _('Medical / Hospital')),
+        ('SECURITY', _('Security Post')),
+        ('AMBULANCE', _('Ambulance Dispatch')),
+    ]
+
+    name = models.CharField(max_length=150)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='MEDICAL')
+    building = models.CharField(max_length=120, blank=True, default='')
+    phone = models.CharField(max_length=40)
+    description = models.TextField(blank=True, default='')
+    latitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        validators=[MinValueValidator(Decimal('-90.0')), MaxValueValidator(Decimal('90.0'))],
+    )
+    longitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        validators=[MinValueValidator(Decimal('-180.0')), MaxValueValidator(Decimal('180.0'))],
+    )
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = _('Emergency Post')
+        verbose_name_plural = _('Emergency Posts')
+        ordering = ['category', 'name']
+
+    def __str__(self):
+        return f"{self.name} ({self.category})"
 

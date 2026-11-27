@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import ShuttleRoute, ShuttleStop, ShuttleVehicle
+from .models import ShuttleRoute, ShuttleStop, ShuttleVehicle, EmergencyPost
 
 
 class ShuttleRouteSerializer(serializers.ModelSerializer):
@@ -80,4 +80,21 @@ class VehicleLocationUpdateSerializer(serializers.Serializer):
     latitude = serializers.DecimalField(max_digits=9, decimal_places=6)
     longitude = serializers.DecimalField(max_digits=9, decimal_places=6)
     speed_kmh = serializers.IntegerField(required=False, default=15)
+
+
+class EmergencyPostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmergencyPost
+        fields = [
+            'id',
+            'name',
+            'category',
+            'building',
+            'phone',
+            'description',
+            'latitude',
+            'longitude',
+            'is_active',
+            'created_at',
+        ]
 

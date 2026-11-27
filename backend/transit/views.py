@@ -3,12 +3,14 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.throttling import SimpleRateThrottle
 from accounts.models import Role
-from .models import ShuttleRoute, ShuttleStop, ShuttleVehicle
+from accounts.permissions import IsAdminRole
+from .models import ShuttleRoute, ShuttleStop, ShuttleVehicle, EmergencyPost
 from .serializers import (
     ShuttleRouteSerializer,
     ShuttleStopSerializer,
     ShuttleVehicleSerializer,
     VehicleLocationUpdateSerializer,
+    EmergencyPostSerializer,
 )
 
 
@@ -123,4 +125,50 @@ class ShuttleVehicleViewSet(viewsets.ModelViewSet):
         vehicle.save(update_fields=['current_latitude', 'current_longitude', 'speed_kmh', 'last_ping'])
 
         return Response(ShuttleVehicleSerializer(vehicle).data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'], permission_classes=[permissions.IsAuthenticated, IsAdminRole])
+    def simulate_step(self, request):
+        """
+        Demo Simulator: advances every ACTIVE vehicle to the next stop along its assigned route.
+        """
+        updated = []
+        vehicles = ShuttleVehicle.objects.select_related('route').filter(status='ACTIVE', route__isnull=False)
+        for v in vehicles:
+            stops = list(v.route.stops.filter(is_active=True).order_by('order', 'id'))
+            if not stops:
+                continue
+            # Find nearest stop index and advance to the next stop
+            best_idx = 0
+            if v.current_latitude is not None and v.current_longitude is not None:
+                vlat, vlng = float(v.current_latitude), float(v.current_longitude)
+                best_dist = float('inf')
+                for idx, s in enumerate(stops):
+                    d = (float(s.latitude) - vlat) ** 2 + (float(s.longitude) - vlng) ** 2
+                    if d < best_dist:
+                        best_dist = d
+                        best_idx = idx
+            next_stop = stops[(best_idx + 1) % len(stops)]
+            v.current_latitude = next_stop.latitude
+            v.current_longitude = next_stop.longitude
+            v.save(update_fields=['current_latitude', 'current_longitude', 'last_ping'])
+            updated.append(v)
+
+        return Response(ShuttleVehicleSerializer(updated, many=True).data, status=status.HTTP_200_OK)
+
+
+class EmergencyPostViewSet(viewsets.ModelViewSet):
+    """
+    Database-backed campus emergency posts (UniHospital, Security Gate, Ambulance Bay).
+    Public read; Admin write.
+    """
+    queryset = EmergencyPost.objects.all().order_by('category', 'name')
+    serializer_class = EmergencyPostSerializer
+    permission_classes = [IsAdminOrPublicReadOnly]
+    pagination_class = None
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if not (self.request.user and self.request.user.is_authenticated and self.request.user.role == Role.ADMIN):
+            qs = qs.filter(is_active=True)
+        return qs
 

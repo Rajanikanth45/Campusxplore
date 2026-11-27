@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ShuttleRoute, ShuttleStop, ShuttleVehicle
+from .models import ShuttleRoute, ShuttleStop, ShuttleVehicle, EmergencyPost
 
 
 @admin.register(ShuttleRoute)
@@ -25,3 +25,11 @@ class ShuttleVehicleAdmin(admin.ModelAdmin):
     list_filter = ('status', 'route')
     search_fields = ('vehicle_number', 'driver_name', 'driver_phone')
     list_editable = ('status', 'speed_kmh', 'current_latitude', 'current_longitude')
+
+
+@admin.register(EmergencyPost)
+class EmergencyPostAdmin(admin.ModelAdmin):
+    list_display = ('name', 'category', 'building', 'phone', 'latitude', 'longitude', 'is_active')
+    list_filter = ('category', 'is_active')
+    search_fields = ('name', 'building', 'phone')
+    list_editable = ('phone', 'is_active')

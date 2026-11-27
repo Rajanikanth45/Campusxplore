@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   AlertTriangle,
   PhoneCall,
@@ -11,6 +11,7 @@ import {
   MapPin,
 } from 'lucide-react';
 import { EMERGENCY_FACILITIES } from '../../data/shuttleData';
+import transitService from '../../services/transitService';
 
 export default function EmergencySosModal({
   isOpen,
@@ -19,6 +20,30 @@ export default function EmergencySosModal({
   onFastPathTo,
 }) {
   const [copied, setCopied] = useState(false);
+  const [emergencyPosts, setEmergencyPosts] = useState([]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let isMounted = true;
+    transitService
+      .getEmergencyPosts()
+      .then((data) => {
+        if (isMounted && Array.isArray(data) && data.length > 0) {
+          setEmergencyPosts(data);
+        }
+      })
+      .catch(() => {
+        // Fallback to static EMERGENCY_FACILITIES
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
+
+  const hospitalTarget =
+    emergencyPosts.find((p) => p.category === 'MEDICAL') || EMERGENCY_FACILITIES.hospital;
+  const securityTarget =
+    emergencyPosts.find((p) => p.category === 'SECURITY') || EMERGENCY_FACILITIES.security;
 
   if (!isOpen) return null;
 
@@ -105,7 +130,7 @@ export default function EmergencySosModal({
               <button
                 type="button"
                 onClick={() => {
-                  onFastPathTo(EMERGENCY_FACILITIES.hospital);
+                  onFastPathTo(hospitalTarget);
                   onClose();
                 }}
                 className="group p-4 rounded-2xl border-2 border-red-200 bg-gradient-to-br from-red-50 to-white hover:border-red-500 hover:shadow-md transition-all text-left flex flex-col justify-between space-y-3 cursor-pointer"
@@ -135,7 +160,7 @@ export default function EmergencySosModal({
               <button
                 type="button"
                 onClick={() => {
-                  onFastPathTo(EMERGENCY_FACILITIES.security);
+                  onFastPathTo(securityTarget);
                   onClose();
                 }}
                 className="group p-4 rounded-2xl border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-white hover:border-indigo-500 hover:shadow-md transition-all text-left flex flex-col justify-between space-y-3 cursor-pointer"

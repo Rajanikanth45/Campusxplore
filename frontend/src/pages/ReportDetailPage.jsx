@@ -162,9 +162,9 @@ export default function ReportDetailPage() {
       </div>
 
       {/* Main Report Card */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
         {/* Banner Header */}
-        <div className="p-6 sm:p-8 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white space-y-3">
+        <div className="p-6 sm:p-8 bg-gradient-to-br from-[#0f1e3d] via-slate-900 to-slate-950 text-white space-y-3">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2">
               <span className="text-xs font-extrabold tracking-wider uppercase bg-white/10 px-2.5 py-1 rounded-md text-slate-200 border border-white/10">
@@ -306,11 +306,23 @@ export default function ReportDetailPage() {
         {/* Report Details Body */}
         <div className="p-6 sm:p-8 space-y-6">
           {/* Issue Description */}
-          <div className="space-y-2">
+          <div className="space-y-3">
             <h3 className="text-sm font-bold text-slate-900">Issue Description</h3>
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
               {report.description}
             </div>
+            {report.attachment && (
+              <div className="pt-1">
+                <span className="block text-xs font-semibold text-slate-500 mb-2">Attached Photo Evidence</span>
+                <a href={report.attachment} target="_blank" rel="noopener noreferrer">
+                  <img
+                    src={report.attachment}
+                    alt={`Attachment for ${report.title}`}
+                    className="max-h-72 rounded-2xl border border-slate-200 shadow-xs object-cover"
+                  />
+                </a>
+              </div>
+            )}
           </div>
 
           {/* Facility Location Details */}

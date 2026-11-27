@@ -17,9 +17,10 @@ CampusXplore is a modern web application engineered to streamline navigation acr
 - **Icons:** [Lucide React](https://lucide.dev/)
 
 ### Backend
-- **Core Runtime:** Python 3.14
+- **Core Runtime:** Python 3.12
 - **Web Framework:** [Django 5.2 (LTS)](https://www.djangoproject.com/)
-- **API Framework:** [Django REST Framework (DRF)](https://www.django-rest-framework.org/)
+- **API Framework:** [Django REST Framework (DRF)](https://www.django-rest-framework.org/) + `djangorestframework-simplejwt`
+- **Apps:** `accounts` (JWT + RBAC), `facilities` (+ Favorites), `reports`, `transit` (E-Rickshaw routes/stops/vehicles), `bookings` (conflict-checked venue reservations), `core` (health + notifications)
 - **CORS Management:** `django-cors-headers`
 - **Database Driver:** `psycopg[binary]` (v3)
 - **Environment Management:** `python-dotenv`
